@@ -1,0 +1,9 @@
+# Analysis environment; Fiji uses the existing separate fiji-agent environment.
+numpy>=2.0,<3
+pandas>=2.2,<4
+scikit-learn>=1.5,<2
+matplotlib>=3.9,<4
+seaborn>=0.13,<0.14
+joblib>=1.4,<2
+ipykernel>=6,<8
+nbformat>=5.10,<6
