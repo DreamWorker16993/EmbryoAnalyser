@@ -13,6 +13,7 @@ class RepositorySetupTests(unittest.TestCase):
             "每次改动完成，都必须创建一个对应的 Git commit。",
             "每次改动后，必须编写或更新相关测试",
             "任何大规模改动需要得到我的批准。",
+            "永远不能改动 `dataset` 文件夹里的任何内容。",
         )
         for rule in required_rules:
             with self.subTest(rule=rule):
