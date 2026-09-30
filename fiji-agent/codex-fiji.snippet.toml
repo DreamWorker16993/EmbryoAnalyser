@@ -1,0 +1,14 @@
+[mcp_servers.fiji]
+command = 'C:\Users\ethan\OneDrive - University of Cambridge\summer_project\fiji-agent\.venv\Scripts\python.exe'
+args = ['C:\Users\ethan\OneDrive - University of Cambridge\summer_project\fiji-agent\start_fiji_mcp.py']
+cwd = 'C:\Users\ethan\OneDrive - University of Cambridge\summer_project\fiji-agent'
+startup_timeout_sec = 120
+tool_timeout_sec = 300
+
+[mcp_servers.fiji.env]
+FIJI_PATH = 'C:\Users\ethan\Desktop\Fiji'
+FIJI_MODE = 'headless'
+JAVA_HOME = 'C:\Users\ethan\Desktop\Fiji\java\win64\zulu21.42.19-ca-jdk21.0.7-win_x64'
+PYTHONUNBUFFERED = '1'
+PYTHONUTF8 = '1'
+

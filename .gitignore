@@ -1,0 +1,34 @@
+# Experimental data and generated analysis output
+dataset/
+outputs/
+
+# Python environments and caches
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.class
+.pytest_cache/
+**/.pytest_cache/
+
+# Fiji agent local runtimes, caches, and diagnostics
+fiji-agent/runtime/
+fiji-agent/cache/
+fiji-agent/java-cache/
+fiji-agent/maven-cache/
+fiji-agent/java-user-home/
+fiji-agent/codex-schema/
+fiji-agent/*.log
+fiji-agent/*-test-result.json
+fiji-agent/config-install-result.json
+fiji-agent/imglyb.pom
+fiji-agent/pom-scijava-*.pom
+fiji-agent/pom-scijava-*.xml
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/

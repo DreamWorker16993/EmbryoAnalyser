@@ -1,0 +1,6 @@
+### run ShapeEmbedLite analysis
+python ShapeEmbedLite.py --train-test-dataset run_1 <train_set_path> <test_set_path>
+
+### run cellpose segmentation on all the .tif images in all subfolders of a directory, and save the segmented cells as ROI files.
+dir /s /b "<master_directory>*.tif"
+for /r "<master_directory>" %D in (.) do python -m cellpose --dir "%D" --pretrained_model cpsam_v2 --save_roi 
