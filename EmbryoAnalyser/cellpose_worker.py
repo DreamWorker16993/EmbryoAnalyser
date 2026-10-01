@@ -97,6 +97,8 @@ def prepare_images(specification: dict) -> list[dict]:
             for index in removals:
                 pixels = np.take(pixels, 0, axis=index)
             if z_index is not None:
+                # Preserve X/Y coordinates so the exported ROIs align with
+                # the same prepared image later passed to the Fiji macro.
                 pixels = (pixels.max(axis=z_index) if specification.get("z_projection") == "max"
                           else np.take(pixels, specification["z_plane"], axis=z_index))
             tifffile.imwrite(destination, pixels, metadata={"axes": output_axes},

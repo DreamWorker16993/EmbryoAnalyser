@@ -12,6 +12,12 @@ __pycache__/
 .pytest_cache/
 **/.pytest_cache/
 
+# Jupyter and Anaconda files generated while browsing or editing notebooks
+.virtual_documents/
+**/.virtual_documents/
+**/.ipynb_checkpoints/
+anaconda_projects/
+
 # Fiji agent local runtimes, caches, and diagnostics
 fiji-agent/runtime/
 fiji-agent/cache/

@@ -203,6 +203,8 @@ def run_neighbours(inputs, output_dir, fiji_path=None, show=False, timeout=None,
     for index, (image, roi) in enumerate(pairs, 1):
         sample_id = _sample_id(image, index)
         workspace = ensure_output_directory(run_dir / "samples" / sample_id)
+        # The original recursive macro selects one TIFF and one ZIP per
+        # folder, so each embryo needs its own isolated working directory.
         # Canonical filenames let the untouched macro process .tiff inputs too.
         image_copy = safe_destination(workspace / "image.tif")
         roi_copy = safe_destination(workspace / "image_rois.zip")

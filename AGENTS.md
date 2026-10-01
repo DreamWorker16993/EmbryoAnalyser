@@ -1,4 +1,4 @@
-1. 每次改动完成，都必须创建一个对应的 Git commit。
-2. 每次改动后，必须编写或更新相关测试，并且在交付给用户之前，确保所有测试和验证全部通过。
-3. 当前目录下已经存在大量 IJM 和 Python 代码，尽可能不改变原代码，而只是分割、复制、重组，以构成需要的文件。任何大规模改动需要得到我的批准。
-4. 永远不能改动 `dataset` 文件夹里的任何内容。
+1. Create a corresponding Git commit after completing each change.
+2. Add or update relevant tests after each change. Ensure all tests and validation pass before delivering the work to the user.
+3. This directory already contains substantial IJM and Python code. Minimize changes to existing code; prefer splitting, copying, and reorganizing it to build the required files. Obtain the user's approval before making large-scale changes.
+4. Never modify any content inside the `dataset` directory.

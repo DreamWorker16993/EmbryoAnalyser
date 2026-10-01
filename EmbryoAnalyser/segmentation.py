@@ -78,6 +78,8 @@ def segmentation_workflow(inputs, output_dir=None, *, python_executable=None,
     for source in paths:
         label = sample_name(source)
         copied = safe_destination(copied_dir / (label + ".tif"))
+        # Cellpose writes ROI ZIP and segmentation state beside its inputs.
+        # Copying first protects source folders regardless of CLI savedir.
         shutil.copy2(source, copied)
         image = safe_destination(image_dir / (label + ".tif"))
         samples.append({"sample_id": label, "input_image": str(source),

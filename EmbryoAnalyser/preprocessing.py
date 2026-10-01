@@ -127,6 +127,8 @@ def read_measurements(
             )
         frame["EM"] = em
         frame["strain"] = _strain(path)
+        # The placeholder supports the original grouped profile structure.
+        # Unknown truth remains missing in file_info and is never a target.
         frame["label"] = 0 if label is None else int(label)
         # Retain only the measurement columns, preserving their source order.
         columns = [column for column in frame.columns if column in required_features]

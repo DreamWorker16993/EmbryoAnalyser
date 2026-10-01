@@ -120,6 +120,8 @@ def predict_files(
     """Return one result per CSV, reusing all fitted model and bin state."""
 
     profiles, info = transform_files(bundle.preprocessing, csv_paths)
+    # Keep the embryo identifiers from preprocessing when joining predictions
+    # to source paths; different folders may contain identical CSV filenames.
     embryo_ids = profiles.index.get_level_values("EM")
     result = info.loc[embryo_ids].reset_index(drop=True)
     for name, classifier in bundle.models.items():

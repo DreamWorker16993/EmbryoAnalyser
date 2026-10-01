@@ -62,6 +62,8 @@ def train_workflow(inputs=None, output_dir=None, model="both") -> dict:
 
     inputs = inputs or PROJECT_ROOT / "dataset/raw_dataset/gap43-mCherry/train"
     paths = expand_inputs(inputs)
+    # Validate destinations before fitting so a rejected output cannot leave a
+    # partially saved model or overwrite one of the supplied measurements.
     output = ensure_output_directory(output_dir or DEFAULT_OUTPUT_ROOT / "training")
     _protect_inputs(output, ("models.joblib", "training_profiles.csv", "training_report.json"), paths)
     bundle = train_models(paths, model=model)
@@ -107,6 +109,8 @@ def classify_workflow(inputs, model_file, output_dir=None) -> dict:
     predictions_csv = _csv(predictions, output / "predictions.csv", inputs=paths)
     profiles_csv = _csv(profiles, output / "profiles.csv", index=True, inputs=paths)
     known = predictions["true_label"].notna()
+    # Unlabeled embryos still receive predictions; only known phenotypes
+    # contribute to accuracy and F1, without inventing evaluation labels.
     metrics = {}
     if known.any():
         truth = predictions.loc[known, "true_label"].astype(int)

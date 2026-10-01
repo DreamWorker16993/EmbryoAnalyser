@@ -10,10 +10,10 @@ class RepositorySetupTests(unittest.TestCase):
         instructions = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
 
         required_rules = (
-            "每次改动完成，都必须创建一个对应的 Git commit。",
-            "每次改动后，必须编写或更新相关测试",
-            "任何大规模改动需要得到我的批准。",
-            "永远不能改动 `dataset` 文件夹里的任何内容。",
+            "Create a corresponding Git commit after completing each change.",
+            "Add or update relevant tests after each change.",
+            "Obtain the user's approval before making large-scale changes.",
+            "Never modify any content inside the `dataset` directory.",
         )
         for rule in required_rules:
             with self.subTest(rule=rule):
@@ -31,6 +31,9 @@ class RepositorySetupTests(unittest.TestCase):
         self.assertIn("fiji-agent/cache/", ignore_rules)
         self.assertIn("**/.venv/", ignore_rules)
         self.assertIn("*.class", ignore_rules)
+        self.assertIn("**/.ipynb_checkpoints/", ignore_rules)
+        self.assertIn(".virtual_documents/", ignore_rules)
+        self.assertIn("anaconda_projects/", ignore_rules)
 
 
 if __name__ == "__main__":
