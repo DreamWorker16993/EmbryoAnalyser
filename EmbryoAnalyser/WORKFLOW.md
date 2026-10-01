@@ -2,6 +2,41 @@
 
 统一入口是 `run_workflow.ipynb`，也可直接使用 `workflow.py`。分类与邻居统计可以分别运行。
 
+新增分段入口 `staged_workflow.ipynb`：分割、训练、分类、数邻居、绘制已有分布各有独立单元和 `RUN_...` 开关，默认均关闭。原 `run_workflow.ipynb` 及其中已有运行结果保留。运行环境与原 notebook 相同。
+
+## 自动分割与分段执行
+
+`segment` 递归处理目录中的 TIFF（`.tif` / `.tiff`），也支持一个文件或多个文件。复用 `terminal_commands.txt` 的 Cellpose 批处理方法和 `cpsam_v2`，无需逐张打开 GUI。当前安装的完整参数名是 `--save_rois`，见 [Cellpose ROI 输出文档](https://cellpose.readthedocs.io/en/latest/outputs.html)。原命令文件保持不动。
+
+分割前将所有输入复制到一个新的输出运行目录，再对副本推理。输出包含 `images/` 中的二维图片、同名 `_rois.zip`、`_seg.npy`，另有原图副本、日志和 `segmentation_report.json`。分割完成后打印 **用于数邻居的 images 目录**；后续将这个目录传给 `neighbours`，即可使用已保存 ROI。分割不会自动触发分类或邻居计数；重新分割会创建另一个运行目录，保留前次结果。
+
+现有 Fiji 宏使用二维 ROI。二维 TIFF 保持不变；raw 目录中多通道 Z-stack 需要显式指定 `--z-projection max`（逐通道最大强度 Z 投影）或 `--z-plane INDEX`（从 0 开始的指定层）。未指定时明确报错，不会默默选择某层。多时间点、多 series、轴信息不明确或超过三通道的图像需先选择所需二维数据。mask/flow TIFF 不作为胚胎图再次分割。
+
+本机默认复用 `C:\Users\ethan\anaconda3\envs\cellpose_env\python.exe`；其他环境可用 `--cellpose-python` 或 `EMBRYO_CELLPOSE_PYTHON` 指定。模型默认 `cpsam_v2`；可指定 `--pretrained-model`。`--diameter`、`--use-gpu` 可选，默认保留原 Cellpose 参数并使用 CPU。`--timeout` 可限制整个分割批次的秒数，默认不限时。没有有效 ROI 的图片会使分割任务明确失败，错误及已产生的文件保存在该次输出目录，不会误报完成。
+
+以下为 **Anaconda Prompt** 命令，在项目根目录执行；无需切换当前 conda 环境，命令明确使用分析环境和独立 Cellpose 环境：
+
+```bat
+cd /d "C:\Users\ethan\OneDrive - University of Cambridge\summer_project"
+
+REM 只分割：二维图片目录
+"EmbryoAnalyser\.venv\Scripts\python.exe" "EmbryoAnalyser\workflow.py" segment --input "dataset\fixed_EM\processed\del15" --output "outputs\segmentation"
+
+REM 只分割：raw Z-stack，显式选择最大强度投影
+"EmbryoAnalyser\.venv\Scripts\python.exe" "EmbryoAnalyser\workflow.py" segment --input "dataset\fixed_EM\raw" --z-projection max --output "outputs\segmentation"
+
+REM 只数邻居：把 INPUT_IMAGES 替换为上一步打印的 images 目录
+"EmbryoAnalyser\.venv\Scripts\python.exe" "EmbryoAnalyser\workflow.py" neighbours --input "INPUT_IMAGES" --output "outputs\neighbours" --show
+
+REM 只训练：首次分类前执行，已有模型则跳过
+"EmbryoAnalyser\.venv\Scripts\python.exe" "EmbryoAnalyser\workflow.py" train --model both --output "outputs\training"
+
+REM 只分类：读取 measurement CSV 和已有模型
+"EmbryoAnalyser\.venv\Scripts\python.exe" "EmbryoAnalyser\workflow.py" classify --input "dataset\raw_dataset\E-CadGFP" --model-file "outputs\training\models.joblib" --output "outputs\classification"
+```
+
+分割生成的 ROI 供邻居计数使用。分类仍读取每个胚胎一份 measurement CSV；此改动不新增从 ROI 生成形态测量 CSV 的算法。
+
 ```text
 measurement CSV（一个文件 = 一个胚胎）
   → AR > 1.5 清理 → 相关特征筛选 → 每特征 16 bins 的细胞百分比
@@ -58,6 +93,7 @@ fixed embryo TIFF + ROI ZIP
 
 | 分支 | 输出文件 |
 |---|---|
+| Cellpose 分割 | 原图副本、二维 `images/`、同名 ROI ZIP、`_seg.npy`、分割 JSON 报告和日志 |
 | 训练 | `models.joblib`、`training_profiles.csv`、`training_report.json` |
 | 预测 | `predictions.csv`、`profiles.csv`、`classification_report.json` |
 | 图片邻居统计 | 唯一运行目录中的输入副本、工作宏、`slow_neighbour_counting.csv`、`neighbour_distribution.csv`、PNG、PDF，以及 `neighbour_summary.csv`、JSON 报告和 Fiji 日志 |
@@ -86,3 +122,5 @@ CSV 缺少必需测量列、没有 `AR > 1.5` 的细胞或某特征所有值都�
 ```
 
 测试覆盖原 notebook 算法回归、单个/批量 CSV、两种及单独模型、保存恢复、输入异常、分布频数与 PNG/PDF、CLI 和 dataset 写入保护。真实 Fiji 单图和两图批量运行另有验证报告，保存在 `outputs/fiji_validation/`；完整 workflow 示例输出保存在 `outputs/workflow_validation/`。
+
+新增测试覆盖目录批量分割、重复文件名、原图不变、任务独立执行、显式 Z 投影/层选择、无效 ROI 和超时。实际 Cellpose 批量分割及随后 Fiji 邻居计数的验证产物保存在 `outputs/segmentation_validation/`。

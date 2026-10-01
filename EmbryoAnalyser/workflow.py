@@ -168,6 +168,17 @@ def distribution_workflow(inputs, output_dir=None, show=False) -> dict:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Embryo CSV classification and Fiji neighbour analysis")
     commands = parser.add_subparsers(dest="command", required=True)
+    segment = commands.add_parser("segment", help="Automatically segment TIFFs with Cellpose and save Fiji ROIs")
+    segment.add_argument("--input", nargs="+", required=True, help="TIFF files or recursive directories")
+    segment.add_argument("--output", default=None)
+    segment.add_argument("--cellpose-python", default=None)
+    segment.add_argument("--pretrained-model", default="cpsam_v2")
+    dimensional = segment.add_mutually_exclusive_group()
+    dimensional.add_argument("--z-projection", choices=("max",), default=None)
+    dimensional.add_argument("--z-plane", type=int, default=None, help="Zero-based Z plane for 2D ROI export")
+    segment.add_argument("--diameter", type=float, default=None)
+    segment.add_argument("--use-gpu", action="store_true")
+    segment.add_argument("--timeout", type=float, default=None, help="Optional whole-batch seconds")
     train = commands.add_parser("train", help="Train and save RF/SVM from labeled measurement CSVs")
     train.add_argument("--input", nargs="+", default=None,
                        help="CSV files or directories; default: gap43-mCherry/train")
@@ -196,7 +207,15 @@ def main(argv=None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        if args.command == "train":
+        if args.command == "segment":
+            from EmbryoAnalyser.segmentation import segmentation_workflow
+            result = segmentation_workflow(args.input, args.output, python_executable=args.cellpose_python,
+                                           pretrained_model=args.pretrained_model, z_projection=args.z_projection,
+                                           z_plane=args.z_plane, diameter=args.diameter,
+                                           use_gpu=args.use_gpu, timeout=args.timeout)
+            print(f"Segmented {len(result['samples'])} images. Use this directory for neighbours: {result['image_dir']}")
+            print(f"Report: {result['report_json']}")
+        elif args.command == "train":
             result = train_workflow(args.input, args.output, args.model)
             print(f"Saved {', '.join(result['report']['models'])}: {result['model_file']}")
         elif args.command == "classify":
