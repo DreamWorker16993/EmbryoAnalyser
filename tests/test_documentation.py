@@ -14,6 +14,15 @@ HAN = re.compile(r"[\u3400-\u9fff]")
 
 
 class DocumentationTests(unittest.TestCase):
+    def test_readme_explains_download_before_environment_setup(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        download = readme.split("## Download\n", 1)[1].split("## Setup\n", 1)[0]
+        self.assertIn("git clone https://github.com/DreamWorker16993/EmbryoAnalyser.git", download)
+        self.assertIn("cd EmbryoAnalyser", download)
+        self.assertIn("https://github.com/DreamWorker16993/EmbryoAnalyser/archive/refs/heads/main.zip", download)
+        self.assertIn("rename `EmbryoAnalyser-main` to `EmbryoAnalyser`", download)
+        self.assertIn("supply your own input images or CSVs", download)
+
     def test_readme_identifies_classifier_targets_and_default_training_set(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("WT versus sdk null classification", readme)

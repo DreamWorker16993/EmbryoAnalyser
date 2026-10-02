@@ -15,6 +15,20 @@ Tasks run independently. Start with measurement if ROIs already exist, or
 classify directly if you have raw measurement CSVs. Inputs stay unchanged;
 outputs default to `outputs/`. The workflow rejects writes inside `dataset/`.
 
+## Download
+
+With Git installed, run in **Anaconda Prompt**:
+
+```bat
+git clone https://github.com/DreamWorker16993/EmbryoAnalyser.git
+cd EmbryoAnalyser
+```
+
+Without Git, [download the ZIP](https://github.com/DreamWorker16993/EmbryoAnalyser/archive/refs/heads/main.zip),
+extract it, and rename `EmbryoAnalyser-main` to `EmbryoAnalyser`.
+Then follow the setup below, replacing `C:\path\to\EmbryoAnalyser` with your folder.
+The download includes the pretrained classifiers; supply your own input images or CSVs.
+
 ## Setup
 
 Run these commands in **Anaconda Prompt**, from the repository root. Skip
