@@ -12,7 +12,7 @@ if __package__ in (None, ""):
     # Use the same qualified module names in notebooks and saved model bundles.
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from EmbryoAnalyser.workflow_io import (
+from embryo_analyser.workflow_io import (
     DEFAULT_OUTPUT_ROOT, PROJECT_ROOT, ensure_output_directory,
     expand_inputs, safe_destination, sample_name, write_json,
 )
@@ -61,7 +61,7 @@ def _protect_inputs(output: Path, filenames, inputs) -> None:
 
 def train_workflow(inputs=None, output_dir=None, model="both") -> dict:
     """Train RF, SVM, or both, then export their complete reusable state."""
-    from EmbryoAnalyser.classifiers import train_models, save_bundle
+    from embryo_analyser.classifiers import train_models, save_bundle
 
     if not inputs:
         raise ValueError("Provide training CSV files or an input directory.")
@@ -90,7 +90,7 @@ def train_workflow(inputs=None, output_dir=None, model="both") -> dict:
         "bin_edges": {name: edges.tolist() for name, edges in state.bin_edges.items()},
         "class_mapping": {"0": "control", "1": "mutant"},
         "package_versions": _versions(),
-        "source_modules": ["EmbryoAnalyser/preprocessing.py", "EmbryoAnalyser/classifiers.py"],
+        "source_modules": ["embryo_analyser/preprocessing.py", "embryo_analyser/classifiers.py"],
         "algorithm_origin": {"git_commit": "63909ae", "path": "EmbryoAnalyser/final_analyser.ipynb"},
     }
     report_path = write_json(output / "training_report.json", report)
@@ -100,8 +100,8 @@ def train_workflow(inputs=None, output_dir=None, model="both") -> dict:
 
 def classify_workflow(inputs, model_file=None, output_dir=None) -> dict:
     """Classify one embryo per CSV and compute metrics only for known labels."""
-    from EmbryoAnalyser.classifiers import load_bundle, predict_files
-    from EmbryoAnalyser.preprocessing import transform_files
+    from embryo_analyser.classifiers import load_bundle, predict_files
+    from embryo_analyser.preprocessing import transform_files
     from sklearn.metrics import accuracy_score, f1_score
 
     model_file = Path(model_file) if model_file is not None else DEFAULT_MODEL_FILE
@@ -154,7 +154,7 @@ def classify_workflow(inputs, model_file=None, output_dir=None) -> dict:
 
 def distribution_workflow(inputs, output_dir=None, show=False) -> dict:
     """Plot existing Fiji counting CSVs without rerunning image analysis."""
-    from EmbryoAnalyser.neighbours import plot_neighbour_distribution
+    from embryo_analyser.neighbours import plot_neighbour_distribution
 
     supplied = [inputs] if isinstance(inputs, (str, Path)) else inputs
     paths = []
@@ -234,7 +234,7 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command in ("measure", "masks"):
-            from EmbryoAnalyser.measurements import measurement_workflow
+            from embryo_analyser.measurements import measurement_workflow
             result = measurement_workflow(args.input, args.output, measure=args.command == "measure",
                                           export_masks=args.command == "masks" or args.export_masks,
                                           fiji_path=args.fiji_path, python_executable=args.fiji_python,
@@ -243,7 +243,7 @@ def main(argv=None) -> int:
             if result["csv_dir"]:
                 print(f"Raw measurement CSV directory for training/classification: {result['csv_dir']}")
         elif args.command == "segment":
-            from EmbryoAnalyser.segmentation import segmentation_workflow
+            from embryo_analyser.segmentation import segmentation_workflow
             result = segmentation_workflow(args.input, args.output, python_executable=args.cellpose_python,
                                            pretrained_model=args.pretrained_model, z_projection=args.z_projection,
                                            z_plane=args.z_plane, diameter=args.diameter,
@@ -258,7 +258,7 @@ def main(argv=None) -> int:
             print(result["predictions"].to_string(index=False))
             print(f"Results: {result['predictions_csv']}")
         elif args.command == "neighbours":
-            from EmbryoAnalyser.neighbours import run_neighbours
+            from embryo_analyser.neighbours import run_neighbours
             result = run_neighbours(args.input, args.output or DEFAULT_OUTPUT_ROOT / "neighbours",
                                     fiji_path=args.fiji_path, show=args.show,
                                     timeout=args.timeout, python_executable=args.fiji_python)

@@ -21,10 +21,10 @@ Run these commands in **Anaconda Prompt**, from the repository root. Skip
 creation/install steps for environments that are already configured.
 
 ```bat
-cd /d "C:\path\to\summer_project"
-python -m venv "EmbryoAnalyser\.venv"
-"EmbryoAnalyser\.venv\Scripts\python.exe" -m pip install -r "EmbryoAnalyser\requirements.lock.txt"
-call "EmbryoAnalyser\.venv\Scripts\activate.bat"
+cd /d "C:\path\to\EmbryoAnalyser"
+python -m venv "embryo_analyser\.venv"
+"embryo_analyser\.venv\Scripts\python.exe" -m pip install -r "embryo_analyser\requirements.lock.txt"
+call "embryo_analyser\.venv\Scripts\activate.bat"
 ```
 
 Use Python 3.11 for analysis. Cellpose runs in a separate environment:
@@ -45,12 +45,12 @@ Register the analysis kernel once, then launch JupyterLab from an environment
 where it is installed:
 
 ```bat
-"EmbryoAnalyser\.venv\Scripts\python.exe" -m ipykernel install --user --name embryo-analyser --display-name "Python (EmbryoAnalyser)"
+"embryo_analyser\.venv\Scripts\python.exe" -m ipykernel install --user --name embryo-analyser --display-name "Python (EmbryoAnalyser)"
 conda activate base
 jupyter lab
 ```
 
-Open [staged_workflow.ipynb](EmbryoAnalyser/staged_workflow.ipynb), select
+Open [staged_workflow.ipynb](embryo_analyser/staged_workflow.ipynb), select
 **Python (EmbryoAnalyser)**, and run setup/configuration cells. Set input paths
 and `OUTPUT`, enable the required tasks, then run their cells in order.
 
@@ -64,14 +64,14 @@ notebook already selects the bundled gap43 RF/SVM model.
 
 ## Terminal tasks
 
-Activate `EmbryoAnalyser/.venv` before running these commands. Replace capitalized
+Activate `embryo_analyser/.venv` before running these commands. Replace capitalized
 paths with your files/directories. Inputs may be one file, several paths after
 `--input`, or a recursive directory; each task accepts `--output`.
 
 ### Segment images
 
 ```bat
-python "EmbryoAnalyser\workflow.py" segment --input "RAW_IMAGES" --output "outputs\segmentation"
+python "embryo_analyser\workflow.py" segment --input "RAW_IMAGES" --output "outputs\segmentation"
 ```
 
 The default Cellpose model is `cpsam_v2`. For Z-stacks, add `--z-projection max`
@@ -80,8 +80,8 @@ or `--z-plane 0`. Use the printed **images directory** in the next step.
 ### Measure images and export masks
 
 ```bat
-python "EmbryoAnalyser\workflow.py" measure --input "IMAGES_WITH_ROIS" --output "outputs\preprocessing" --export-masks
-python "EmbryoAnalyser\workflow.py" masks --input "IMAGES_WITH_ROIS" --output "outputs\masks"
+python "embryo_analyser\workflow.py" measure --input "IMAGES_WITH_ROIS" --output "outputs\preprocessing" --export-masks
+python "embryo_analyser\workflow.py" masks --input "IMAGES_WITH_ROIS" --output "outputs\masks"
 ```
 
 Use matching `<image_stem>_rois.zip` beside each TIFF. Omit `--export-masks` for
@@ -89,12 +89,12 @@ CSV measurements only; `masks` exports masks only. Results use a new run folder
 with per-image `measurement.csv` and `masks/mask_INDEX.png`. Masks are full-frame,
 black cells on white background; ROIs within two pixels of the border are
 excluded from mask export. Choose an output directory outside the input tree.
-The active macro is [make_mask.ijm](EmbryoAnalyser/macros/make_mask.ijm).
+The active macro is [make_mask.ijm](embryo_analyser/macros/make_mask.ijm).
 
 ### Classify measurement CSVs
 
 ```bat
-python "EmbryoAnalyser\workflow.py" classify --input "RAW_CSV_DIRECTORY" --output "outputs\classification"
+python "embryo_analyser\workflow.py" classify --input "RAW_CSV_DIRECTORY" --output "outputs\classification"
 ```
 
 Use the **raw CSV directory** printed by measurement, or your existing CSVs.
@@ -103,7 +103,7 @@ training/prediction: `AR > 1.5` filtering and percentage feature profiles.
 Prediction reuses the saved model's feature selection, bins, and SVM scaler.
 Do not supply already binned `profiles.csv` as raw input.
 
-The default [model](EmbryoAnalyser/models/gap43_default.joblib) contains RF/SVM
+The default [model](embryo_analyser/models/gap43_default.joblib) contains RF/SVM
 trained on all **14 gap43-mCherry embryos: 8 WT and 6 sdk null**, including the
 historical `train` and `test` folders. No training step is required. Add
 `--model-file "outputs\training\models.joblib"` to select a custom model.
@@ -113,7 +113,7 @@ training overlap. Performance on other strains requires separate evaluation.
 ### Train a custom model
 
 ```bat
-python "EmbryoAnalyser\workflow.py" train --input "LABELED_CSV_DIRECTORY" --model both --output "outputs\training"
+python "embryo_analyser\workflow.py" train --input "LABELED_CSV_DIRECTORY" --model both --output "outputs\training"
 ```
 
 Use `--model rf`, `svm`, or `both`. Training requires both phenotypes, named
@@ -123,8 +123,8 @@ requires an explicit input path. Custom models do not replace the bundled defaul
 ### Neighbour distributions
 
 ```bat
-python "EmbryoAnalyser\workflow.py" neighbours --input "IMAGES_WITH_ROIS" --output "outputs\neighbours" --show
-python "EmbryoAnalyser\workflow.py" distribution --input "COUNTING_CSV_DIRECTORY" --output "outputs\distributions" --show
+python "embryo_analyser\workflow.py" neighbours --input "IMAGES_WITH_ROIS" --output "outputs\neighbours" --show
+python "embryo_analyser\workflow.py" distribution --input "COUNTING_CSV_DIRECTORY" --output "outputs\distributions" --show
 ```
 
 `neighbours` runs Fiji counting and Python plotting. `distribution` plots
@@ -150,12 +150,19 @@ ShapeEmbedLite is not bundled or launched by this workflow.
 ## Validation and contributing
 
 ```bat
-"EmbryoAnalyser\.venv\Scripts\python.exe" -B -m unittest discover -s tests -v
+"embryo_analyser\.venv\Scripts\python.exe" -B -m unittest discover -s tests -v
 ```
 
 The repository runs without `dataset/`: provide your own input files and use
 the bundled classifier. Tests use generated fixtures; optional regression tests
 against local experimental data are skipped when those files are absent. See
-[WORKFLOW.md](EmbryoAnalyser/WORKFLOW.md) for input contracts, algorithm provenance,
+[WORKFLOW.md](embryo_analyser/WORKFLOW.md) for input contracts, algorithm provenance,
 and validation details. Follow [AGENTS.md](AGENTS.md): preserve dataset contents,
 validate changes, and create corresponding commits.
+
+Repository layout: `EmbryoAnalyser/` is the project root; `embryo_analyser/`
+contains the Python package, notebooks, macros and pretrained models.
+`tests/` contains validation and `fiji-agent/` contains optional Fiji integration.
+After moving the project, recreate virtual environments and register the Jupyter
+kernel again using the setup commands above. Existing workflow model bundles
+remain compatible through `load_bundle`.

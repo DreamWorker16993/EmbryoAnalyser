@@ -50,7 +50,7 @@ general platform requirements.
 From the repository root, use the analysis Python to launch the isolated worker:
 
 ```bat
-"EmbryoAnalyser\.venv\Scripts\python.exe" "EmbryoAnalyser\workflow.py" neighbours --input "PATH_TO_IMAGES_WITH_ROIS" --output "outputs\neighbours" --fiji-path "C:\path\to\Fiji" --fiji-python "fiji-agent\.venv\Scripts\python.exe"
+"embryo_analyser\.venv\Scripts\python.exe" "embryo_analyser\workflow.py" neighbours --input "PATH_TO_IMAGES_WITH_ROIS" --output "outputs\neighbours" --fiji-path "C:\path\to\Fiji" --fiji-python "fiji-agent\.venv\Scripts\python.exe"
 ```
 
 Each image and ROI ZIP is copied to a separate output workspace. Only the
@@ -59,11 +59,11 @@ with an interactive UI, processes the batch, and exits. The analysis code then
 exports distributions. See the [main README](../README.md).
 
 The same isolated worker also runs `measure` and `masks`, using the active
-`EmbryoAnalyser/macros/make_mask.ijm`. Input copies, morphology CSVs, and cell
+`embryo_analyser/macros/make_mask.ijm`. Input copies, morphology CSVs, and cell
 masks are written to separate per-image workspaces. For both exports:
 
 ```bat
-"EmbryoAnalyser\.venv\Scripts\python.exe" "EmbryoAnalyser\workflow.py" measure --input "PATH_TO_IMAGES_WITH_ROIS" --export-masks --output "outputs\preprocessing"
+"embryo_analyser\.venv\Scripts\python.exe" "embryo_analyser\workflow.py" measure --input "PATH_TO_IMAGES_WITH_ROIS" --export-masks --output "outputs\preprocessing"
 ```
 
 Select alternate Fiji installations with the same `--fiji-path` and

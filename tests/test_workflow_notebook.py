@@ -12,13 +12,13 @@ import nbformat
 
 
 ROOT = Path(__file__).resolve().parents[1]
-NOTEBOOK = ROOT / "EmbryoAnalyser/run_workflow.ipynb"
+NOTEBOOK = ROOT / "embryo_analyser/run_workflow.ipynb"
 
 
 class WorkflowNotebookTests(unittest.TestCase):
     def test_setup_finds_project_from_nested_directory_without_legacy_notebook(self):
         for name in ("run_workflow.ipynb", "staged_workflow.ipynb"):
-            path = ROOT / "EmbryoAnalyser" / name
+            path = ROOT / "embryo_analyser" / name
             notebook = nbformat.read(path, as_version=4)
             setup = next(cell for cell in notebook.cells
                          if cell.cell_type == "code" and "ROOT = next(" in cell.source)
@@ -29,7 +29,7 @@ class WorkflowNotebookTests(unittest.TestCase):
                 self.assertEqual(namespace["ROOT"], ROOT)
 
     def test_staged_notebook_is_clean_and_tasks_start_only_when_selected(self):
-        staged = ROOT / "EmbryoAnalyser/staged_workflow.ipynb"
+        staged = ROOT / "embryo_analyser/staged_workflow.ipynb"
         notebook = nbformat.read(staged, as_version=4)
         nbformat.validate(notebook)
         namespace = {"__name__": "__main__"}
@@ -44,7 +44,7 @@ class WorkflowNotebookTests(unittest.TestCase):
             self.assertFalse(namespace["RUN_" + task])
         # Selecting segmentation performs only that task and provides a reusable
         # image directory for a later, separately selected neighbour task.
-        from EmbryoAnalyser import workflow, neighbours
+        from embryo_analyser import workflow, neighbours
         report = {"samples": [{"input_image": "source", "n_rois": 2, "image_file": "image", "roi_file": "roi"}],
                   "image_dir": "output_images", "report_json": "report.json"}
         with patch.dict(namespace, {"RUN_SEGMENTATION": True, "display": lambda value: None}), \
@@ -115,7 +115,7 @@ class WorkflowNotebookTests(unittest.TestCase):
             self.assertIn("svm_prediction", predictions)
             report = json.loads((Path(temporary) / "classification/classification_report.json").read_text("utf-8"))
             self.assertEqual(report["predictions"], 10)
-            from EmbryoAnalyser.workflow import DEFAULT_MODEL_FILE
+            from embryo_analyser.workflow import DEFAULT_MODEL_FILE
             self.assertEqual(report["model_file"], str(DEFAULT_MODEL_FILE))
             self.assertFalse((Path(temporary) / "training").exists())
             samples = namespace["plotted"]["samples"]

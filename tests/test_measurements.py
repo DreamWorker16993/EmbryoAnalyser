@@ -10,8 +10,8 @@ import zipfile
 
 import pandas as pd
 
-from EmbryoAnalyser import measurements, fiji_worker, workflow
-from EmbryoAnalyser.workflow_io import DATASET_ROOT
+from embryo_analyser import measurements, fiji_worker, workflow
+from embryo_analyser.workflow_io import DATASET_ROOT
 from fixture_support import synthetic_measurements
 
 

@@ -152,6 +152,14 @@ def save_bundle(bundle: ModelBundle, path: str | Path) -> Path:
 def load_bundle(path: str | Path) -> ModelBundle:
     """Load a model bundle previously created by this workflow."""
 
+    # Older bundles retain the original package name in pickle records.
+    # Keep their fitted state usable after the package directory is renamed.
+    import importlib
+    import sys
+    sys.modules.setdefault("EmbryoAnalyser", importlib.import_module("embryo_analyser"))
+    for module in ("preprocessing", "classifiers"):
+        sys.modules.setdefault("EmbryoAnalyser." + module,
+                               importlib.import_module("embryo_analyser." + module))
     bundle = joblib.load(Path(path))
     if not isinstance(bundle, ModelBundle) or bundle.format_version != 1:
         raise ValueError("The file is not a supported embryo classifier model bundle.")

@@ -6,7 +6,7 @@ import unittest
 
 import nbformat
 
-from EmbryoAnalyser.workflow import build_parser
+from embryo_analyser.workflow import build_parser
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,7 +23,7 @@ class DocumentationTests(unittest.TestCase):
 
     def test_project_markdown_is_english_and_has_valid_local_links(self):
         documents = [ROOT / "README.md", ROOT / "AGENTS.md",
-                     ROOT / "EmbryoAnalyser/WORKFLOW.md", ROOT / "fiji-agent/README.md"]
+                     ROOT / "embryo_analyser/WORKFLOW.md", ROOT / "fiji-agent/README.md"]
         for path in documents:
             with self.subTest(document=path.name):
                 content = path.read_text(encoding="utf-8")
@@ -36,7 +36,7 @@ class DocumentationTests(unittest.TestCase):
                     self.assertTrue((path.parent / target.split("#", 1)[0]).exists(), target)
 
     def test_notebook_markdown_is_english_and_outputs_are_cleared(self):
-        for path in (ROOT / "EmbryoAnalyser").glob("*.ipynb"):
+        for path in (ROOT / "embryo_analyser").glob("*.ipynb"):
             with self.subTest(notebook=path.name):
                 notebook = nbformat.read(path, as_version=4)
                 nbformat.validate(notebook)
@@ -71,29 +71,29 @@ class DocumentationTests(unittest.TestCase):
                 self.assertIn('workflow.py" ' + arguments[0], readme)
 
     def test_historical_report_and_presentation_are_removed(self):
-        self.assertFalse((ROOT / "EmbryoAnalyser/2026_summer_project_report.pdf").exists())
-        self.assertFalse((ROOT / "EmbryoAnalyser/final_presentation.pptx").exists())
+        self.assertFalse((ROOT / "embryo_analyser/2026_EmbryoAnalyser_report.pdf").exists())
+        self.assertFalse((ROOT / "embryo_analyser/final_presentation.pptx").exists())
         self.assertFalse((ROOT / "fiji-agent/README.zh-CN.md").exists())
-        for path in ("EmbryoAnalyser/macros/neighbour_counting_connect_centroid.ijm",
+        for path in ("embryo_analyser/macros/neighbour_counting_connect_centroid.ijm",
                      "fiji-agent/java-support/fijiagent/MemoryPreferencesFactory.java"):
             self.assertTrue((ROOT / path).is_file())
 
     def test_unused_sources_are_removed_and_active_interfaces_remain(self):
         obsolete = (
-            "EmbryoAnalyser/mask_to_dm.ipynb", "EmbryoAnalyser/final_analyser.ipynb",
-            "EmbryoAnalyser/n_neighbour_distribution.ipynb", "EmbryoAnalyser/helpers.py",
-            "EmbryoAnalyser/make_mask.ijm", "EmbryoAnalyser/terminal_commands.txt",
+            "embryo_analyser/mask_to_dm.ipynb", "embryo_analyser/final_analyser.ipynb",
+            "embryo_analyser/n_neighbour_distribution.ipynb", "embryo_analyser/helpers.py",
+            "embryo_analyser/make_mask.ijm", "embryo_analyser/terminal_commands.txt",
             "fiji-agent/debug_java.py", "fiji-agent/test_bridge.py",
         )
         for path in obsolete:
             with self.subTest(path=path):
                 self.assertFalse((ROOT / path).exists())
         self.assertEqual(
-            {path.name for path in (ROOT / "EmbryoAnalyser").glob("*.ipynb")},
+            {path.name for path in (ROOT / "embryo_analyser").glob("*.ipynb")},
             {"run_workflow.ipynb", "staged_workflow.ipynb"},
         )
         self.assertEqual(
-            sorted(path.name for path in (ROOT / "EmbryoAnalyser/macros").glob("*.ijm")),
+            sorted(path.name for path in (ROOT / "embryo_analyser/macros").glob("*.ijm")),
             ["make_mask.ijm", "neighbour_counting_connect_centroid.ijm"],
         )
 

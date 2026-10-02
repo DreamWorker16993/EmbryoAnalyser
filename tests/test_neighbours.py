@@ -13,9 +13,9 @@ import matplotlib
 matplotlib.use("Agg")
 import pandas as pd
 
-from EmbryoAnalyser import neighbours
-from EmbryoAnalyser import fiji_worker
-from EmbryoAnalyser.workflow_io import DATASET_ROOT
+from embryo_analyser import neighbours
+from embryo_analyser import fiji_worker
+from embryo_analyser.workflow_io import DATASET_ROOT
 from fixture_support import write_neighbour_counts
 
 
@@ -82,7 +82,7 @@ class NeighbourTests(unittest.TestCase):
         source = DATASET_ROOT / "fixed_EM/processed/del15/s9_1/slow_neighbour_counting.csv"
         if not source.is_file():
             source = write_neighbour_counts(self.root / "counts.csv")
-        command = [sys.executable, "-c", "from EmbryoAnalyser.neighbours import plot_neighbour_distribution; import sys; plot_neighbour_distribution(sys.argv[1], sys.argv[2])", str(source), str(self.root / "portable")]
+        command = [sys.executable, "-c", "from embryo_analyser.neighbours import plot_neighbour_distribution; import sys; plot_neighbour_distribution(sys.argv[1], sys.argv[2])", str(source), str(self.root / "portable")]
         environment = {**os.environ, "MPLBACKEND": "TkAgg"}
         completed = subprocess.run(command, cwd=str(neighbours.PROJECT), capture_output=True,
                                    text=True, env=environment, timeout=60)

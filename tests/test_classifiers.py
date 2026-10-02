@@ -11,8 +11,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
 
-from EmbryoAnalyser.classifiers import load_bundle, predict_files, save_bundle, train_models
-from EmbryoAnalyser.preprocessing import (
+from embryo_analyser.classifiers import load_bundle, predict_files, save_bundle, train_models
+from embryo_analyser.preprocessing import (
     fit_preprocessing, infer_label, read_measurements, transform_files,
 )
 

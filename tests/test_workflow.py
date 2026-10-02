@@ -16,7 +16,7 @@ import uuid
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ANALYSER = ROOT / "EmbryoAnalyser"
+ANALYSER = ROOT / "embryo_analyser"
 DATASET = ROOT / "dataset"
 sys.path.insert(0, str(ANALYSER))
 

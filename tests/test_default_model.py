@@ -10,8 +10,8 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 
-from EmbryoAnalyser.classifiers import load_bundle, predict_files, train_models
-from EmbryoAnalyser.workflow import DEFAULT_MODEL_FILE, build_parser, classify_workflow
+from embryo_analyser.classifiers import load_bundle, predict_files, train_models
+from embryo_analyser.workflow import DEFAULT_MODEL_FILE, build_parser, classify_workflow
 from fixture_support import write_measurements
 
 
@@ -48,7 +48,7 @@ class DefaultModelTests(unittest.TestCase):
         source = next(GAP43.rglob("*.csv"))
         model_hash = hashlib.sha256(DEFAULT_MODEL_FILE.read_bytes()).hexdigest()
         with tempfile.TemporaryDirectory() as temporary, \
-                patch("EmbryoAnalyser.classifiers.train_models", side_effect=AssertionError("Unexpected training")):
+                patch("embryo_analyser.classifiers.train_models", side_effect=AssertionError("Unexpected training")):
             result = classify_workflow(source, output_dir=temporary)
             self.assertEqual(result["report"]["model_file"], str(DEFAULT_MODEL_FILE))
             self.assertEqual(result["report"]["also_in_training"], [str(source.resolve())])
@@ -67,7 +67,7 @@ class DefaultModelTests(unittest.TestCase):
         arguments = build_parser().parse_args(["classify", "--input", "input.csv"])
         self.assertIsNone(arguments.model_file)
         with tempfile.TemporaryDirectory() as temporary:
-            command = [sys.executable, "-B", str(ROOT / "EmbryoAnalyser/workflow.py"),
+            command = [sys.executable, "-B", str(ROOT / "embryo_analyser/workflow.py"),
                        "classify", "--input", str(write_measurements(Path(temporary) / "input.csv")),
                        "--output", str(Path(temporary) / "results")]
             completed = subprocess.run(command, cwd=temporary, capture_output=True,

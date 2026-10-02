@@ -4,9 +4,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from EmbryoAnalyser.classifiers import load_bundle
-from EmbryoAnalyser.preprocessing import MEASUREMENT_FEATURES
-from EmbryoAnalyser.workflow import DEFAULT_MODEL_FILE
+from embryo_analyser.classifiers import load_bundle
+from embryo_analyser.preprocessing import MEASUREMENT_FEATURES
+from embryo_analyser.workflow import DEFAULT_MODEL_FILE
 
 
 def synthetic_measurements():

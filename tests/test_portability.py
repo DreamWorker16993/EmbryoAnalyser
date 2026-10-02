@@ -9,7 +9,7 @@ from unittest.mock import patch
 import nbformat
 import pandas as pd
 
-from EmbryoAnalyser import workflow
+from embryo_analyser import workflow
 from fixture_support import synthetic_measurements, write_measurements
 
 
@@ -42,15 +42,15 @@ class PortabilityTests(unittest.TestCase):
             def read_user_file(path, *args, **kwargs):
                 self.assertEqual(Path(path).resolve(), source.resolve())
                 return original_reader(path, *args, **kwargs)
-            with patch("EmbryoAnalyser.preprocessing.pd.read_csv", side_effect=read_user_file), \
-                    patch("EmbryoAnalyser.classifiers.train_models", side_effect=AssertionError("Unexpected training")):
+            with patch("embryo_analyser.preprocessing.pd.read_csv", side_effect=read_user_file), \
+                    patch("embryo_analyser.classifiers.train_models", side_effect=AssertionError("Unexpected training")):
                 result = workflow.classify_workflow(source, output_dir=root / "results")
             self.assertEqual(len(result["predictions"]), 1)
             self.assertEqual(result["report"]["also_in_training"], [])
 
     def test_training_requires_user_inputs_before_fitting_or_creating_outputs(self):
         with tempfile.TemporaryDirectory() as temporary, \
-                patch("EmbryoAnalyser.classifiers.train_models") as train:
+                patch("embryo_analyser.classifiers.train_models") as train:
             output = Path(temporary) / "results"
             with self.assertRaisesRegex(ValueError, "Provide training CSV"):
                 workflow.train_workflow(output_dir=output)
@@ -62,7 +62,7 @@ class PortabilityTests(unittest.TestCase):
 
     def test_both_notebooks_start_without_input_files_or_enabled_tasks(self):
         for name in ("run_workflow.ipynb", "staged_workflow.ipynb"):
-            path = ROOT / "EmbryoAnalyser" / name
+            path = ROOT / "embryo_analyser" / name
             namespace = {"__name__": "__main__"}
             with self.subTest(notebook=name), redirect_stdout(io.StringIO()):
                 for cell in nbformat.read(path, as_version=4).cells:

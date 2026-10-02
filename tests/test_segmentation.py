@@ -11,8 +11,8 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from EmbryoAnalyser import segmentation, cellpose_worker, workflow, neighbours
-from EmbryoAnalyser.workflow_io import DATASET_ROOT
+from embryo_analyser import segmentation, cellpose_worker, workflow, neighbours
+from embryo_analyser.workflow_io import DATASET_ROOT
 
 
 class SegmentationTests(unittest.TestCase):
@@ -150,7 +150,7 @@ import hashlib
 from pathlib import Path
 import numpy as np
 import tifffile
-from EmbryoAnalyser.cellpose_worker import prepare_images
+from embryo_analyser.cellpose_worker import prepare_images
 import sys
 root=Path(sys.argv[1]); image=root/'stack.tif'
 pixels=np.arange(3*2*12*14,dtype=np.uint16).reshape(3,2,12,14)

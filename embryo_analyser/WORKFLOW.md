@@ -53,8 +53,8 @@ step. A selected training task updates `MODEL_FILE` to the custom output model.
 The CLI uses the same bundled model when `--model-file` is omitted.
 
 Select the `Python (EmbryoAnalyser)` kernel backed by
-`EmbryoAnalyser/.venv/Scripts/python.exe`. Launch notebooks from the repository
-root or `EmbryoAnalyser/`. Input lists accept individual paths or recursive
+`embryo_analyser/.venv/Scripts/python.exe`. Launch notebooks from the repository
+root or `embryo_analyser/`. Input lists accept individual paths or recursive
 folders. Notebook figures display through IPython and are also saved to disk.
 Notebooks are stored without execution outputs for a compact Git checkout.
 
@@ -192,8 +192,8 @@ runs and obsolete diagnostics can be removed after checking their results.
 ## Validation
 
 ```bat
-"EmbryoAnalyser\.venv\Scripts\python.exe" -m pip check
-"EmbryoAnalyser\.venv\Scripts\python.exe" -B -m unittest discover -s tests -v
+"embryo_analyser\.venv\Scripts\python.exe" -m pip check
+"embryo_analyser\.venv\Scripts\python.exe" -B -m unittest discover -s tests -v
 ```
 
 Run from the repository root. Regression tests cover the original algorithms,
