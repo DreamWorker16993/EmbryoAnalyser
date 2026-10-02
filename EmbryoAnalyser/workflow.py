@@ -63,7 +63,8 @@ def train_workflow(inputs=None, output_dir=None, model="both") -> dict:
     """Train RF, SVM, or both, then export their complete reusable state."""
     from EmbryoAnalyser.classifiers import train_models, save_bundle
 
-    inputs = inputs or PROJECT_ROOT / "dataset/raw_dataset/gap43-mCherry"
+    if not inputs:
+        raise ValueError("Provide training CSV files or an input directory.")
     paths = expand_inputs(inputs)
     # Validate destinations before fitting so a rejected output cannot leave a
     # partially saved model or overwrite one of the supplied measurements.
@@ -127,6 +128,7 @@ def classify_workflow(inputs, model_file=None, output_dir=None) -> dict:
                                            average="macro", zero_division=0)),
             }
     training_sources = set()
+    # Historical training paths are provenance; prediction never opens them.
     if bundle.training_profiles is not None and hasattr(bundle, "training_info"):
         if bundle.training_info is not None:
             # The shipped model stores repository-relative provenance so it
@@ -203,8 +205,8 @@ def build_parser() -> argparse.ArgumentParser:
     segment.add_argument("--use-gpu", action="store_true")
     segment.add_argument("--timeout", type=float, default=None, help="Optional whole-batch seconds")
     train = commands.add_parser("train", help="Train and save RF/SVM from labeled measurement CSVs")
-    train.add_argument("--input", nargs="+", default=None,
-                       help="CSV files or directories; default: all gap43-mCherry embryos")
+    train.add_argument("--input", nargs="+", required=True,
+                       help="Labeled CSV files or directories supplied by the user")
     train.add_argument("--output", default=None)
     train.add_argument("--model", choices=("rf", "svm", "both"), default="both")
     classify = commands.add_parser("classify", help="Predict a single or batch of measurement CSVs")

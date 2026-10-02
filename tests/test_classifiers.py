@@ -26,6 +26,8 @@ class ClassifierWorkflowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.train_paths = sorted(TRAIN.rglob("*.csv"))
+        if not cls.train_paths:
+            raise unittest.SkipTest("Optional local experimental CSV fixtures are not available.")
         cls.bundle = train_models(cls.train_paths)
         cls.test_paths = sorted((RAW / "gap43-mCherry" / "test").rglob("*.csv"))
 

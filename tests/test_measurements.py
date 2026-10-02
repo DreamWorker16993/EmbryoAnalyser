@@ -12,9 +12,7 @@ import pandas as pd
 
 from EmbryoAnalyser import measurements, fiji_worker, workflow
 from EmbryoAnalyser.workflow_io import DATASET_ROOT
-
-
-REFERENCE = DATASET_ROOT / "fixed_EM/processed/del15/s9_1/measurement.csv"
+from fixture_support import synthetic_measurements
 
 
 class MeasurementTests(unittest.TestCase):
@@ -40,7 +38,7 @@ class MeasurementTests(unittest.TestCase):
             directory = Path(sample["measurement_csv"]).parent
             directory.mkdir(parents=True)
             if specification["measure"]:
-                shutil.copy2(REFERENCE, sample["measurement_csv"])
+                synthetic_measurements().to_csv(sample["measurement_csv"], index=False)
             if specification["export_masks"]:
                 masks = Path(sample["masks_dir"])
                 masks.mkdir()

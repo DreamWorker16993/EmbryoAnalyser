@@ -28,6 +28,7 @@ from workflow_io import (  # noqa: E402
     sample_name,
     write_json,
 )
+from fixture_support import write_neighbour_counts
 
 
 class WorkflowOutputSafetyTests(unittest.TestCase):
@@ -177,6 +178,9 @@ class WorkflowInputDiscoveryTests(unittest.TestCase):
         self.assertRegex(sample_name(first), r"^[A-Za-z0-9._-]+_[0-9a-f]{10}$")
 
 
+@unittest.skipUnless((DATASET / "raw_dataset/gap43-mCherry/train").is_dir()
+                    and (DATASET / "raw_dataset/E-CadGFP").is_dir(),
+                    "Optional local classification regression fixtures")
 class WorkflowClassificationIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -338,6 +342,9 @@ class WorkflowDistributionIntegrationTests(unittest.TestCase):
             DATASET / "fixed_EM" / "processed" / "del15" / "s9_1" / "slow_neighbour_counting.csv",
             DATASET / "fixed_EM" / "processed" / "del15" / "s7_2" / "slow_neighbour_counting.csv",
         ]
+        if not all(source.is_file() for source in self.sources):
+            self.sources = [write_neighbour_counts(self.directory / "inputs/first/slow_neighbour_counting.csv"),
+                            write_neighbour_counts(self.directory / "inputs/second/slow_neighbour_counting.csv", (1, 2, 4, 8))]
         self.original_hashes = {source: hashlib.sha256(source.read_bytes()).hexdigest()
                                 for source in self.sources}
         self.addCleanup(self.assert_sources_unchanged)

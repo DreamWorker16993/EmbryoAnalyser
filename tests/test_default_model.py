@@ -12,6 +12,7 @@ import pandas as pd
 
 from EmbryoAnalyser.classifiers import load_bundle, predict_files, train_models
 from EmbryoAnalyser.workflow import DEFAULT_MODEL_FILE, build_parser, classify_workflow
+from fixture_support import write_measurements
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,6 +20,7 @@ GAP43 = ROOT / "dataset/raw_dataset/gap43-mCherry"
 
 
 class DefaultModelTests(unittest.TestCase):
+    @unittest.skipUnless(GAP43.is_dir(), "Optional local training provenance fixtures")
     def test_bundled_model_matches_all_14_training_sources_and_fresh_fit(self):
         paths = sorted(GAP43.rglob("*.csv"))
         bundled = load_bundle(DEFAULT_MODEL_FILE)
@@ -41,6 +43,7 @@ class DefaultModelTests(unittest.TestCase):
         pd.testing.assert_frame_equal(predict_files(bundled, test_inputs),
                                       predict_files(fresh, test_inputs))
 
+    @unittest.skipUnless(GAP43.is_dir(), "Optional local training overlap fixtures")
     def test_default_classification_loads_without_training_and_detects_overlap(self):
         source = next(GAP43.rglob("*.csv"))
         model_hash = hashlib.sha256(DEFAULT_MODEL_FILE.read_bytes()).hexdigest()
@@ -56,7 +59,7 @@ class DefaultModelTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             with self.assertRaises(FileNotFoundError):
-                classify_workflow(next(GAP43.rglob("*.csv")), directory / "missing.joblib",
+                classify_workflow(write_measurements(directory / "input.csv"), directory / "missing.joblib",
                                   directory / "results")
             self.assertFalse((directory / "results/predictions.csv").exists())
 
@@ -65,7 +68,7 @@ class DefaultModelTests(unittest.TestCase):
         self.assertIsNone(arguments.model_file)
         with tempfile.TemporaryDirectory() as temporary:
             command = [sys.executable, "-B", str(ROOT / "EmbryoAnalyser/workflow.py"),
-                       "classify", "--input", str(next(GAP43.rglob("*.csv"))),
+                       "classify", "--input", str(write_measurements(Path(temporary) / "input.csv")),
                        "--output", str(Path(temporary) / "results")]
             completed = subprocess.run(command, cwd=temporary, capture_output=True,
                                        text=True, encoding="utf-8", timeout=60)

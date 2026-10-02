@@ -16,6 +16,7 @@ import pandas as pd
 from EmbryoAnalyser import neighbours
 from EmbryoAnalyser import fiji_worker
 from EmbryoAnalyser.workflow_io import DATASET_ROOT
+from fixture_support import write_neighbour_counts
 
 
 class NeighbourTests(unittest.TestCase):
@@ -65,6 +66,7 @@ class NeighbourTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "directory prompt"):
             neighbours.prepare_macro(workspace, "unexpected source")
 
+    @unittest.skipUnless((DATASET_ROOT / "fixed_EM/processed/del15/s9_1/slow_neighbour_counting.csv").is_file(), "Optional local counting regression fixture")
     def test_real_distribution_regression_and_exports(self):
         source = DATASET_ROOT / "fixed_EM/processed/del15/s9_1/slow_neighbour_counting.csv"
         distribution = neighbours.neighbour_distribution(source).set_index("n_neighbours")
@@ -78,6 +80,8 @@ class NeighbourTests(unittest.TestCase):
 
     def test_export_does_not_require_tk_gui_backend(self):
         source = DATASET_ROOT / "fixed_EM/processed/del15/s9_1/slow_neighbour_counting.csv"
+        if not source.is_file():
+            source = write_neighbour_counts(self.root / "counts.csv")
         command = [sys.executable, "-c", "from EmbryoAnalyser.neighbours import plot_neighbour_distribution; import sys; plot_neighbour_distribution(sys.argv[1], sys.argv[2])", str(source), str(self.root / "portable")]
         environment = {**os.environ, "MPLBACKEND": "TkAgg"}
         completed = subprocess.run(command, cwd=str(neighbours.PROJECT), capture_output=True,
@@ -198,6 +202,8 @@ class NeighbourTests(unittest.TestCase):
         first, first_roi = self.image("one/s7_1", "Composite.tif")
         second, _ = self.image("two/s7_1", "Composite.tif")
         expected = DATASET_ROOT / "fixed_EM/processed/del15/s9_1/slow_neighbour_counting.csv"
+        if not expected.is_file():
+            expected = write_neighbour_counts(self.root / "counts.csv")
         def mock_worker(manifest_path, python_executable, timeout):
             self.assertIsNone(timeout)
             specification = json.loads(manifest_path.read_text(encoding="utf-8"))

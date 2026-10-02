@@ -10,6 +10,12 @@ The command entry point is `workflow.py`. Its `segment`, `measure`, `masks`, `tr
 `neighbours`, and `distribution` subcommands execute independently. Running
 segmentation does not automatically train classifiers or launch Fiji.
 
+Runtime inputs are supplied by the user; no local experimental folder is
+required. Notebook input lists start empty and all task switches start disabled.
+`train` requires explicit labeled CSV inputs. Classification loads the bundled
+model without opening its historical training files. The reserved dataset path
+is used only to reject writes, including when that directory does not exist.
+
 ```text
 Single or batch measurement CSVs (one embryo per file)
   -> AR > 1.5 filtering -> correlated-feature removal -> 16-bin cell percentages
@@ -193,6 +199,7 @@ runs and obsolete diagnostics can be removed after checking their results.
 Run from the repository root. Regression tests cover the original algorithms,
 CSV and image batch interfaces, saved model state, plot exports, independent
 task selection, explicit Z preparation, and protected destinations. Local
-fixture data is required for data-dependent tests. Real Cellpose image-crop
+experimental data is optional: tests generate portable fixtures and skip local
+scientific regression checks when private files are absent. Real Cellpose image-crop
 segmentation and subsequent Fiji counting have also been checked; these smoke
 runs are distinct from mocked unit tests.

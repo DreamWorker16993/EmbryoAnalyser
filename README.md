@@ -57,7 +57,8 @@ and `OUTPUT`, enable the required tasks, then run their cells in order.
 - Full image workflow: `RUN_SEGMENTATION`, `RUN_MEASUREMENT`, `RUN_CLASSIFICATION`.
 - Optional tasks: `RUN_MASKS`, `RUN_TRAINING`, `RUN_NEIGHBOURS`, `RUN_DISTRIBUTION`.
 
-All switches start disabled. Segmentation supplies images to measurement;
+Input lists start empty; fill them with your own files/directories. All switches
+start disabled. Segmentation supplies images to measurement;
 measurement supplies raw CSVs to classification. Training is optional: the
 notebook already selects the bundled gap43 RF/SVM model.
 
@@ -116,8 +117,8 @@ python "EmbryoAnalyser\workflow.py" train --input "LABELED_CSV_DIRECTORY" --mode
 ```
 
 Use `--model rf`, `svm`, or `both`. Training requires both phenotypes, named
-`control`/`mutant` or using `control-`/`mutant-` directory prefixes. Omitted input
-uses all gap43 embryos. Custom models do not replace the bundled default.
+`control`/`mutant` or using `control-`/`mutant-` directory prefixes. Training
+requires an explicit input path. Custom models do not replace the bundled default.
 
 ### Neighbour distributions
 
@@ -152,7 +153,9 @@ ShapeEmbedLite is not bundled or launched by this workflow.
 "EmbryoAnalyser\.venv\Scripts\python.exe" -B -m unittest discover -s tests -v
 ```
 
-Data-dependent tests require the local `dataset/` fixtures. See
+The repository runs without `dataset/`: provide your own input files and use
+the bundled classifier. Tests use generated fixtures; optional regression tests
+against local experimental data are skipped when those files are absent. See
 [WORKFLOW.md](EmbryoAnalyser/WORKFLOW.md) for input contracts, algorithm provenance,
 and validation details. Follow [AGENTS.md](AGENTS.md): preserve dataset contents,
 validate changes, and create corresponding commits.

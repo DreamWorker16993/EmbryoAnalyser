@@ -74,7 +74,7 @@ class WorkflowNotebookTests(unittest.TestCase):
     def test_notebook_schema_and_all_code_cells_compile(self):
         notebook = nbformat.read(NOTEBOOK, as_version=4)
         nbformat.validate(notebook)
-        self.assertTrue(any("RUN_FIJI = True" in cell.source for cell in notebook.cells))
+        self.assertTrue(any("RUN_FIJI = False" in cell.source for cell in notebook.cells))
         for index, cell in enumerate(notebook.cells):
             if cell.cell_type == "code":
                 with self.subTest(cell=index):
@@ -83,6 +83,9 @@ class WorkflowNotebookTests(unittest.TestCase):
                     self.assertTrue(cell.execution_count is None or isinstance(cell.execution_count, int))
                     self.assertIsInstance(cell.outputs, list)
 
+    @unittest.skipUnless((ROOT / "dataset/raw_dataset/E-CadGFP").is_dir()
+                         and (ROOT / "dataset/fixed_EM/processed/del15/s9_1/slow_neighbour_counting.csv").is_file(),
+                         "Optional local notebook regression fixtures")
     def test_notebook_classification_and_existing_distribution_cells_execute(self):
         notebook = nbformat.read(NOTEBOOK, as_version=4)
         with tempfile.TemporaryDirectory(prefix="embryo-notebook-test-") as temporary:
@@ -96,11 +99,16 @@ class WorkflowNotebookTests(unittest.TestCase):
                     if "PLOT_EXISTING_COUNTS = False" in source:
                         source = source.replace("PLOT_EXISTING_COUNTS = False",
                                                 "PLOT_EXISTING_COUNTS = True", 1)
+                        source = source.replace("EXISTING_COUNTS = []",
+                                                "EXISTING_COUNTS = [ROOT / 'dataset/fixed_EM/processed/del15/s9_1/slow_neighbour_counting.csv']")
                     exec(compile(source, str(NOTEBOOK), "exec"), namespace)
-                    if "RUN_FIJI = True" in source:
+                    if "RUN_FIJI = False" in source:
                         output = Path(temporary)
                         namespace.update(OUTPUT=output,
-                                         RUN_FIJI=False, display=captured.append)
+                                         RUN_CLASSIFICATION=True, RUN_FIJI=False,
+                                         CSV_INPUTS=[ROOT / "dataset/raw_dataset/E-CadGFP"],
+                                         EXISTING_COUNTS=[ROOT / "dataset/fixed_EM/processed/del15/s9_1/slow_neighbour_counting.csv"],
+                                         display=captured.append)
             predictions = namespace["classified"]["predictions"]
             self.assertEqual(len(predictions), 10)
             self.assertIn("rf_prediction", predictions)

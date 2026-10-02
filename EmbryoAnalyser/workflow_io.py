@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+# Reserved write-protection path; this directory need not exist at runtime.
 DATASET_ROOT = PROJECT_ROOT / "dataset"
 DEFAULT_OUTPUT_ROOT = PROJECT_ROOT / "outputs"
 
