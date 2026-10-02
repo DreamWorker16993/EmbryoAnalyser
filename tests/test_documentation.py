@@ -14,6 +14,13 @@ HAN = re.compile(r"[\u3400-\u9fff]")
 
 
 class DocumentationTests(unittest.TestCase):
+    def test_readme_identifies_classifier_targets_and_default_training_set(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("WT versus sdk null classification", readme)
+        self.assertIn("0=control (WT)", readme)
+        self.assertIn("1=mutant (sdk null)", readme)
+        self.assertIn("14 gap43-mCherry embryos: 8 WT and 6 sdk null", readme)
+
     def test_project_markdown_is_english_and_has_valid_local_links(self):
         documents = [ROOT / "README.md", ROOT / "AGENTS.md",
                      ROOT / "EmbryoAnalyser/WORKFLOW.md", ROOT / "fiji-agent/README.md"]
