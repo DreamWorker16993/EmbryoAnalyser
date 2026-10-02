@@ -58,6 +58,19 @@ directory-selection statement is changed in the macro's working copy. Fiji runs
 with an interactive UI, processes the batch, and exits. The analysis code then
 exports distributions. See the [main README](../README.md).
 
+The same isolated worker also runs `measure` and `masks`, using the active
+`EmbryoAnalyser/macros/make_mask.ijm`. Input copies, morphology CSVs, and cell
+masks are written to separate per-image workspaces. For both exports:
+
+```bat
+"EmbryoAnalyser\.venv\Scripts\python.exe" "EmbryoAnalyser\workflow.py" measure --input "PATH_TO_IMAGES_WITH_ROIS" --export-masks --output "outputs\preprocessing"
+```
+
+Select alternate Fiji installations with the same `--fiji-path` and
+`--fiji-python` options. The worker validates directory substitutions and task
+switches before starting Java; the macro's measurement and mask algorithms
+remain in the IJM file.
+
 ## Optional MCP utilities
 
 `start_fiji_mcp.py` starts the JVM on the main thread before the original MCP

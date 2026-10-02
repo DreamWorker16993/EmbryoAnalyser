@@ -6,7 +6,7 @@ input/output contracts, notebook choices, algorithm provenance, and limitations.
 
 ## Independent tasks
 
-The command entry point is `workflow.py`. Its `segment`, `train`, `classify`,
+The command entry point is `workflow.py`. Its `segment`, `measure`, `masks`, `train`, `classify`,
 `neighbours`, and `distribution` subcommands execute independently. Running
 segmentation does not automatically train classifiers or launch Fiji.
 
@@ -18,12 +18,19 @@ Single or batch measurement CSVs (one embryo per file)
 Single or batch TIFF images
   -> protected input copies -> optional explicit Z preparation -> Cellpose
   -> prepared images + ROI ZIPs -> protected Fiji workspaces
+  -> make_mask.ijm -> raw measurement CSVs + optional cell-mask PNGs
+  -> automatic raw CSV preprocessing -> default or custom RF / SVM prediction
+  -> optional separate neighbour analysis:
   -> original neighbour-counting macro -> counting CSV
   -> Python frequency/percentage table + PNG/PDF + batch summary
 ```
 
-Segmentation produces ROI ZIPs for neighbour analysis. It does not create the
-morphology measurement CSVs used by the classifiers.
+Segmentation produces ROI ZIPs. `measure` generates the morphology CSVs needed
+for classification. `measure --export-masks` additionally exports cell masks;
+`masks` runs only that export. Their inputs and output bases are configurable.
+The default output is `outputs/preprocessing`, with a unique directory per run.
+Raw CSV cleaning always runs inside training/classification, so no manual
+spreadsheet edits or preprocessing step is required between these tasks.
 
 ## Notebook interfaces
 
@@ -50,6 +57,11 @@ needed, `Z_PROJECTION='max'` or zero-based `Z_PLANE`. Segmentation sets
 `NEIGHBOUR_INPUTS` to its result directory in the current session. In a later
 session, point `NEIGHBOUR_INPUTS` to that saved `images/` directory explicitly.
 Other stages remain disabled until selected.
+
+Segmentation also sets `PREPROCESS_IMAGE_INPUTS`. Select `RUN_MEASUREMENT` and/or
+`RUN_MASKS` for Fiji morphology/mask export. Measurement sets `CSV_INPUTS` and
+`TRAIN_INPUTS` to its generated raw CSV directory. Selecting segmentation,
+measurement, and classification gives the complete image-to-prediction path.
 
 ## Automatic Cellpose segmentation
 
@@ -103,6 +115,7 @@ not require Tk.
 | Task | Files |
 | --- | --- |
 | Segmentation | Original copies, prepared `images/`, ROI ZIPs, `*_seg.npy`, segmentation JSON and logs |
+| Measurements/masks | Protected TIFF/ROI copies, per-image raw `measurement.csv`, per-cell PNG masks, preparation JSON and logs |
 | Training | `models.joblib`, `training_profiles.csv`, `training_report.json` |
 | Classification | `predictions.csv`, `profiles.csv`, `classification_report.json` |
 | Neighbours | Input copies, working macro, `slow_neighbour_counting.csv`, `neighbour_distribution.csv`, PNG/PDF, `neighbour_summary.csv`, report and logs |
@@ -124,8 +137,8 @@ zero.
 ## Algorithm provenance
 
 Exploratory notebooks are archived in Git commit `63909ae`. Code-cell numbers
-below refer to those historical notebooks and are zero-based. Only the active
-`macros/neighbour_counting_connect_centroid.ijm` remains in the working tree;
+below refer to those historical notebooks and are zero-based. Active macros
+`macros/make_mask.ijm` and `macros/neighbour_counting_connect_centroid.ijm` remain;
 Python wraps its execution rather than replacing its counting algorithm.
 The original preprocessing cells used by regression tests are stored separately
 in `tests/fixtures/legacy_preprocessing.json`, with source commit and checksum.
@@ -140,6 +153,9 @@ in `tests/fixtures/legacy_preprocessing.json`, with source commit and checksum.
   `n_neighbour_distribution.ipynb`, with single-image export and extended bins.
 - `segmentation.py` and `cellpose_worker.py` adapt the existing Cellpose batch
   command to input copies and explicit dimensional preparation.
+- `measurements.py` invokes the original measurement/mask operations from
+  `make_mask.ijm`, adapted for paired images, separate outputs, and task switches.
+  Measurement includes all ROIs; mask export keeps the two-pixel border rule.
 
 Training and prediction are separate. Feature selection, bins, and the SVM
 scaler are fitted only on the specified training CSVs. The original notebook's

@@ -182,6 +182,15 @@ def distribution_workflow(inputs, output_dir=None, show=False) -> dict:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Embryo CSV classification and Fiji neighbour analysis")
     commands = parser.add_subparsers(dest="command", required=True)
+    for name in ("measure", "masks"):
+        task = commands.add_parser(name, help="Fiji morphology CSVs" if name == "measure" else "Individual cell-mask PNGs")
+        task.add_argument("--input", nargs="+", required=True, help="TIFF/ROI files or recursive directories")
+        task.add_argument("--output", default=None, help="Default: outputs/preprocessing, with unique run folders")
+        task.add_argument("--fiji-path", default=None)
+        task.add_argument("--fiji-python", default=None)
+        task.add_argument("--timeout", type=float, default=None)
+        if name == "measure":
+            task.add_argument("--export-masks", action="store_true", help="Also save masks during measurement")
     segment = commands.add_parser("segment", help="Automatically segment TIFFs with Cellpose and save Fiji ROIs")
     segment.add_argument("--input", nargs="+", required=True, help="TIFF files or recursive directories")
     segment.add_argument("--output", default=None)
@@ -222,7 +231,16 @@ def main(argv=None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        if args.command == "segment":
+        if args.command in ("measure", "masks"):
+            from EmbryoAnalyser.measurements import measurement_workflow
+            result = measurement_workflow(args.input, args.output, measure=args.command == "measure",
+                                          export_masks=args.command == "masks" or args.export_masks,
+                                          fiji_path=args.fiji_path, python_executable=args.fiji_python,
+                                          timeout=args.timeout)
+            print(f"Processed {len(result['samples'])} images: {result['run_dir']}")
+            if result["csv_dir"]:
+                print(f"Raw measurement CSV directory for training/classification: {result['csv_dir']}")
+        elif args.command == "segment":
             from EmbryoAnalyser.segmentation import segmentation_workflow
             result = segmentation_workflow(args.input, args.output, python_executable=args.cellpose_python,
                                            pretrained_model=args.pretrained_model, z_projection=args.z_projection,

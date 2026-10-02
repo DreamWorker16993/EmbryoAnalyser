@@ -8,6 +8,8 @@ from an Anaconda Prompt or a Jupyter notebook.
 
 - Automatically segment single or recursively collected TIFF images with
   Cellpose `cpsam_v2`, and export Fiji-compatible ROI ZIPs.
+- Measure every image's cell ROIs in Fiji and export one raw morphology CSV per
+  embryo; optionally save individual cell masks using `macros/make_mask.ijm`.
 - Train and reuse Random Forest (RF), Support Vector Machine (SVM), or both
   classifiers from one measurement CSV per embryo.
 - Run the existing centroid-connection neighbour-counting macro in an isolated
@@ -18,13 +20,16 @@ from an Anaconda Prompt or a Jupyter notebook.
 
 ```text
 TIFF images -> Cellpose segmentation -> prepared images + ROI ZIPs
+                                      -> Fiji measurements -> raw CSVs
+                                         -> automatic CSV preprocessing -> RF / SVM
+                                      -> optional individual cell-mask PNGs
                                       -> Fiji neighbour counting -> tables + plots
-
-Measurement CSVs -> cleaning + feature profiles -> RF / SVM -> predictions
 ```
 
-Segmentation does not generate morphology measurement CSVs. Classification and
-image analysis are separate branches; ROI ZIPs feed the neighbour-counting branch.
+The image-to-classification workflow is segmentation, image preparation
+(measurements plus optional masks), and classification. Users with existing
+ROIs can start at measurement; users with raw measurement CSVs can classify
+directly. Training and classification always preprocess raw CSVs automatically.
 
 ## Requirements
 
@@ -34,8 +39,8 @@ The existing setup has been tested on Windows with:
 | --- | --- | --- |
 | Analysis Python | Python 3.11, `EmbryoAnalyser/.venv` | Classification, plots, notebooks, command entry point |
 | Cellpose | Separate Python 3.10 environment, Cellpose 4.2.1.1 | Automatic segmentation |
-| Fiji bridge | Python 3.11, `fiji-agent/.venv`, PyImageJ 1.8.0 | Neighbour counting |
-| Fiji / Java | Local Fiji installation, tested with its bundled Java 21 | Neighbour counting |
+| Fiji bridge | Python 3.11, `fiji-agent/.venv`, PyImageJ 1.8.0 | Measurements, masks, neighbour counting |
+| Fiji / Java | Local Fiji installation, tested with its bundled Java 21 | Measurements, masks, neighbour counting |
 | JupyterLab | May run in the existing conda `base` environment | Notebook interface |
 
 A GPU is optional. Cellpose uses CPU unless `--use-gpu` is requested. The default
@@ -127,6 +132,8 @@ Open [staged_workflow.ipynb](EmbryoAnalyser/staged_workflow.ipynb):
 | Switch | Task |
 | --- | --- |
 | `RUN_SEGMENTATION` | Automatic Cellpose segmentation and ROI export |
+| `RUN_MEASUREMENT` | Fiji morphology measurement and raw CSV export |
+| `RUN_MASKS` | Export individual cell-mask PNGs |
 | `RUN_TRAINING` | Train and save RF / SVM classifiers |
 | `RUN_CLASSIFICATION` | Predict CSVs using the bundled gap43 model or a custom model |
 | `RUN_NEIGHBOURS` | Run Fiji counting and display distributions |
@@ -143,6 +150,14 @@ For classification, enable `RUN_CLASSIFICATION` and leave `RUN_TRAINING=False`.
 embryos. Training is optional; enabling it replaces `MODEL_FILE` with the newly
 saved custom model for that notebook session. The combined notebook defaults
 to `RETRAIN=False` and also loads the bundled model.
+
+For the full image workflow, enable `RUN_SEGMENTATION`, `RUN_MEASUREMENT`, and
+`RUN_CLASSIFICATION`. Run the task cells in their displayed order. Segmentation
+sets `PREPROCESS_IMAGE_INPUTS` to its images directory; measurement sets
+`CSV_INPUTS` and `TRAIN_INPUTS` to its raw CSV directory. Enable `RUN_MASKS` to
+save masks during the same Fiji run. With existing ROIs, set
+`PREPROCESS_IMAGE_INPUTS` directly and skip segmentation. The output base is
+`OUTPUT / 'preprocessing'`; change `OUTPUT` to choose another destination.
 
 ## Quick start: independent terminal tasks
 
@@ -175,6 +190,80 @@ The command prints the generated **images directory**. Keep that path for the
 next task. Optional settings include `--cellpose-python`, `--pretrained-model`,
 `--diameter`, `--use-gpu`, and a whole-batch `--timeout` in seconds. The default
 model is `cpsam_v2`. Repeated runs create separate output directories.
+
+### Measure images and export masks
+
+Supply the images directory printed by segmentation, or a directory of existing
+TIFF images and matching `<image_stem>_rois.zip` files:
+
+```bat
+python "EmbryoAnalyser\workflow.py" measure --input "PATH_TO_IMAGES_WITH_ROIS" --output "outputs\preprocessing" --export-masks
+```
+
+Omit `--export-masks` to produce only measurements. To export only masks:
+
+```bat
+python "EmbryoAnalyser\workflow.py" masks --input "PATH_TO_IMAGES_WITH_ROIS" --output "outputs\masks"
+```
+
+Both tasks accept individual TIFFs, a recursive directory, or multiple paths.
+Several images may share a folder, provided every image has its own named ROI
+ZIP. A legacy ZIP name is accepted only when the folder has one TIFF and one
+ZIP. Missing, empty, corrupt, or ambiguous ROI inputs are rejected. Choose an
+output base outside `dataset` and outside the input directory. Without
+`--output`, results go to `outputs/preprocessing/`. Each run creates a unique
+`preprocessing_DATE_TIME_ID` directory containing:
+
+```text
+samples/control|mutant|input/SAMPLE_ID/
+  input_copies/image.tif + image_rois.zip
+  results/image/measurement.csv
+  results/image/masks/mask_0.png, mask_1.png, ...
+  run_make_mask.ijm
+```
+
+Only selected tasks produce their corresponding files. Sample IDs distinguish
+same-named images in different directories. Recognized control/mutant input
+directories are preserved as output label categories for later training.
+`measurement.csv` contains all ROI measurements using the original ImageJ
+options (`area centroid perimeter fit shape feret's`, three decimal places).
+Masks follow the original macro: one full-image-size binary PNG per eligible
+ROI, black cell on white background, named using its zero-based ROI index.
+ROIs whose bounding boxes are within two pixels of the border are skipped for
+mask export; their measurements remain in the CSV.
+
+The command prints a **raw CSV directory** ending in `samples`. Classify it
+using the bundled gap43 model:
+
+```bat
+python "EmbryoAnalyser\workflow.py" classify --input "PATH_TO_RAW_CSV_DIRECTORY" --output "outputs\classification"
+```
+
+Training and prediction clean these raw CSVs automatically: validate measurement
+columns, remove irrelevant columns, filter `AR > 1.5`, and build percentage
+feature profiles. Training fits correlation-based feature selection, 16-bin
+boundaries, important-feature selection, and SVM scaling. Prediction reuses the
+saved model's fitted state. Do not pass exported `profiles.csv` as raw input.
+
+The active macro is `EmbryoAnalyser/macros/make_mask.ijm`. It can also be opened
+directly in Fiji; select the input and a fresh output directory in its prompts.
+Its `measureCells` and `exportMasks` switches choose the tasks. CLI/notebook use
+provides protected input copies and stronger checks for dataset aliases and
+output collisions. The obsolete root-level macro and `final_analyser.ipynb`
+are absent.
+
+For a separate ShapeEmbedLite analysis, copy eligible PNG masks into your own
+training/test directories and keep all cells from each embryo in the same
+split. The historical command notes used:
+
+```bat
+python ShapeEmbedLite.py --train-test-dataset run_1 TRAIN_MASK_DIR TEST_MASK_DIR
+```
+
+That script and its dependencies are external to this workflow. Check its
+installed version's input requirements and options, including whether masks
+need cropping or resizing. This workflow exports the masks and does not launch
+ShapeEmbedLite.
 
 ### Count neighbours
 
@@ -261,6 +350,8 @@ TIFFs; `train`, `classify`, and `distribution` expect their corresponding CSVs.
 | Task | Main files |
 | --- | --- |
 | Segmentation | Input copies, prepared `images/`, `*_rois.zip`, `*_seg.npy`, `segmentation_report.json`, logs |
+| Measurements | Per-image raw `measurement.csv`, input copies, preparation report, Fiji logs |
+| Masks | Per-cell `mask_INDEX.png` under each sample's `masks/`, preparation report |
 | Training | `models.joblib`, `training_profiles.csv`, `training_report.json` |
 | Classification | `predictions.csv`, `profiles.csv`, `classification_report.json` |
 | Neighbour counting | Per-cell CSV, frequency CSV, PNG/PDF plots, `neighbour_summary.csv`, JSON report, Fiji logs |
@@ -273,7 +364,7 @@ columns, and the fitted SVM scaler. Prediction reuses these values.
 
 ```text
 EmbryoAnalyser/        Workflow modules, two user notebooks, dependencies
-  macros/             Active Fiji neighbour-counting macro
+  macros/             Active measurement/mask and neighbour-counting macros
   models/             Bundled RF/SVM model trained on all 14 gap43 embryos
 fiji-agent/           Local PyImageJ bridge, Java support, optional MCP utilities
 tests/                Workflow regression and integration tests
@@ -285,8 +376,9 @@ AGENTS.md             Contribution and dataset-protection rules
 
 Historical reports, slides, exploratory notebooks, unused mask helpers/macros,
 command notes, and duplicate debug launchers have been removed. Their originals
-remain available in Git commit `63909ae`. The active neighbour-counting IJM is
-retained under `EmbryoAnalyser/macros/`; Python invokes it and plots its output.
+remain available in Git commit `63909ae`. The active IJMs are retained under
+`EmbryoAnalyser/macros/`: `make_mask.ijm` produces morphology CSVs/masks and
+`neighbour_counting_connect_centroid.ijm` counts neighbours.
 `tests/fixtures/legacy_preprocessing.json` retains only the original processing
 cells needed for independent algorithm regression. Workflow modules stay at
 their existing import paths so saved model bundles remain compatible.

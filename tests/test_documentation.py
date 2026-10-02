@@ -48,6 +48,8 @@ class DocumentationTests(unittest.TestCase):
     def test_readme_examples_match_the_actual_parser(self):
         parser = build_parser()
         examples = [
+            ["measure", "--input", "images", "--export-masks", "--output", "out"],
+            ["masks", "--input", "images", "--output", "out"],
             ["segment", "--input", "images", "--output", "out"],
             ["segment", "--input", "raw", "--z-projection", "max", "--output", "out"],
             ["neighbours", "--input", "images", "--output", "out", "--show"],
@@ -84,8 +86,8 @@ class DocumentationTests(unittest.TestCase):
             {"run_workflow.ipynb", "staged_workflow.ipynb"},
         )
         self.assertEqual(
-            [path.name for path in (ROOT / "EmbryoAnalyser/macros").glob("*.ijm")],
-            ["neighbour_counting_connect_centroid.ijm"],
+            sorted(path.name for path in (ROOT / "EmbryoAnalyser/macros").glob("*.ijm")),
+            ["make_mask.ijm", "neighbour_counting_connect_centroid.ijm"],
         )
 
 

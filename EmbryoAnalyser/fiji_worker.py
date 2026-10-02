@@ -13,8 +13,55 @@ except ImportError:
     from workflow_io import safe_destination
 
 
+def prepare_measurement_macro(workspace: Path, measure: bool, masks: bool) -> str:
+    """Adapt only directory prompts and task switches in the active mask macro."""
+    source = (Path(__file__).parent / "macros/make_mask.ijm").read_text(encoding="utf-8")
+    changes = {
+        'getDirectory("Choose the Master Directory containing subfolders:")':
+            json.dumps((workspace / "input_copies").as_posix() + "/"),
+        'getDirectory("Choose the output directory:")':
+            json.dumps((workspace / "results").as_posix() + "/"),
+        "measureCells = true;": "measureCells = " + str(measure).lower() + ";",
+        "exportMasks = true;": "exportMasks = " + str(masks).lower() + ";",
+    }
+    for original, replacement in changes.items():
+        if source.count(original) != 1:
+            raise ValueError("The measurement macro adapter needs review.")
+        source = source.replace(original, replacement, 1)
+    return source
+
+
+def validate_measurements(specification: dict) -> None:
+    measure, masks = specification.get("measure"), specification.get("export_masks")
+    if type(measure) is not bool or type(masks) is not bool or not (measure or masks):
+        raise ValueError("Select measurements, masks, or both.")
+    if not specification.get("samples"):
+        raise ValueError("The Fiji manifest contains no samples.")
+    for sample in specification["samples"]:
+        workspace = safe_destination(sample["workspace"])
+        if safe_destination(sample["macro"]) != workspace / "run_make_mask.ijm":
+            raise ValueError("Measurement macro must be in its protected workspace.")
+        expected_csv = workspace / "results/image/measurement.csv"
+        expected_masks = workspace / "results/image/masks"
+        if safe_destination(sample["measurement_csv"]) != expected_csv or safe_destination(sample["masks_dir"]) != expected_masks:
+            raise ValueError("Measurement outputs must be in their protected workspace.")
+        if expected_csv.parent.exists():
+            raise FileExistsError("Refusing to overwrite previous measurement or mask results.")
+        for filename in ("image.tif", "image_rois.zip"):
+            if not safe_destination(workspace / "input_copies" / filename).is_file():
+                raise FileNotFoundError("Missing copied measurement input: " + filename)
+        if Path(sample["macro"]).read_text(encoding="utf-8") != prepare_measurement_macro(workspace, measure, masks):
+            raise ValueError("The measurement working macro changes its algorithm.")
+
+
 def validate_manifest(specification: dict) -> None:
     """Validate all output paths and exact macro copies before starting Java."""
+    task = specification.get("task", "neighbours")
+    if task == "measure":
+        validate_measurements(specification)
+        return
+    if task != "neighbours":
+        raise ValueError("Unknown Fiji task.")
     original = (Path(__file__).parent / "macros" / "neighbour_counting_connect_centroid.ijm").read_text(encoding="utf-8")
     prompt = 'getDirectory("Choose the Master Directory containing subfolders:")'
     if original.count(prompt) != 1:
@@ -56,7 +103,9 @@ def main(manifest_path: str) -> int:
         ij.ui().showUI()
         result.update({"imagej_version": str(ij.getVersion()), "headless": False})
         for sample in specification["samples"]:
-            counts = safe_destination(sample["counts_csv"])
+            measurement_task = specification.get("task") == "measure"
+            key = "measurement_csv" if measurement_task else "counts_csv"
+            counts = safe_destination(sample[key])
             if counts.exists():
                 raise FileExistsError(f"Refusing to overwrite a previous counting result: {counts}")
             code = Path(sample["macro"]).read_text(encoding="utf-8")
@@ -64,9 +113,12 @@ def main(manifest_path: str) -> int:
             log = ij.IJ.getLog()
             if log is None or "--- ALL SUBFOLDERS FULLY PROCESSED ---" not in str(log):
                 raise RuntimeError("Fiji macro did not reach its completion message.")
-            if not counts.is_file():
+            csv_required = not measurement_task or specification["measure"]
+            if csv_required and not counts.is_file():
                 raise RuntimeError(f"The Fiji macro did not produce its counting CSV: {counts}")
-            result["samples"].append({"sample_id": sample["sample_id"], "counts_csv": str(counts)})
+            if measurement_task and specification["export_masks"] and not Path(sample["masks_dir"]).is_dir():
+                raise RuntimeError("The Fiji macro did not produce its masks directory.")
+            result["samples"].append({"sample_id": sample["sample_id"], key: str(counts)})
             # Clear the log to ensure the next completion message is new.
             ij.IJ.log("\\Clear")
         result["passed"] = True

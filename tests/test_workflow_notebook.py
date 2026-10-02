@@ -40,7 +40,7 @@ class WorkflowNotebookTests(unittest.TestCase):
                 self.assertEqual(cell.outputs, [])
                 with redirect_stdout(io.StringIO()):
                     exec(compile(cell.source, str(staged), "exec"), namespace)
-        for task in ("SEGMENTATION", "TRAINING", "CLASSIFICATION", "NEIGHBOURS", "DISTRIBUTION"):
+        for task in ("SEGMENTATION", "MEASUREMENT", "MASKS", "TRAINING", "CLASSIFICATION", "NEIGHBOURS", "DISTRIBUTION"):
             self.assertFalse(namespace["RUN_" + task])
         # Selecting segmentation performs only that task and provides a reusable
         # image directory for a later, separately selected neighbour task.
@@ -57,8 +57,19 @@ class WorkflowNotebookTests(unittest.TestCase):
                 exec(compile(cell.source, str(staged), "exec"), namespace)
             fake_segment.assert_called_once()
             self.assertEqual(namespace["NEIGHBOUR_INPUTS"], [Path("output_images")])
+            self.assertEqual(namespace["PREPROCESS_IMAGE_INPUTS"], [Path("output_images")])
             classify.assert_not_called()
             count.assert_not_called()
+        namespace.update(RUN_MEASUREMENT=True, RUN_MASKS=False, display=lambda value: None)
+        fake_prepare = unittest.mock.Mock(return_value={"csv_dir": "measured_csvs", "run_dir": "prepared", "samples": []})
+        namespace["measurement_workflow"] = fake_prepare
+        cell = next(c for c in notebook.cells if c.cell_type == "code" and "if RUN_MEASUREMENT or RUN_MASKS:" in c.source)
+        with redirect_stdout(io.StringIO()):
+            exec(compile(cell.source, str(staged), "exec"), namespace)
+        self.assertEqual(namespace["CSV_INPUTS"], [Path("measured_csvs")])
+        self.assertEqual(namespace["TRAIN_INPUTS"], [Path("measured_csvs")])
+        self.assertEqual(fake_prepare.call_args.kwargs["measure"], True)
+        self.assertEqual(fake_prepare.call_args.kwargs["export_masks"], False)
 
     def test_notebook_schema_and_all_code_cells_compile(self):
         notebook = nbformat.read(NOTEBOOK, as_version=4)
