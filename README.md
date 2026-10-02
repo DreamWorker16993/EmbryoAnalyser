@@ -128,7 +128,7 @@ Open [staged_workflow.ipynb](EmbryoAnalyser/staged_workflow.ipynb):
 | --- | --- |
 | `RUN_SEGMENTATION` | Automatic Cellpose segmentation and ROI export |
 | `RUN_TRAINING` | Train and save RF / SVM classifiers |
-| `RUN_CLASSIFICATION` | Predict measurement CSVs using a saved model |
+| `RUN_CLASSIFICATION` | Predict CSVs using the bundled gap43 model or a custom model |
 | `RUN_NEIGHBOURS` | Run Fiji counting and display distributions |
 | `RUN_DISTRIBUTION` | Plot existing counting CSVs only |
 
@@ -137,6 +137,12 @@ current session, but does not start counting. In a later session, set
 `NEIGHBOUR_INPUTS` to the saved directory explicitly. The older
 [run_workflow.ipynb](EmbryoAnalyser/run_workflow.ipynb) remains available for the
 combined classification and existing-ROI workflow.
+
+For classification, enable `RUN_CLASSIFICATION` and leave `RUN_TRAINING=False`.
+`MODEL_FILE` already points to the bundled RF/SVM model trained on all 14 gap43
+embryos. Training is optional; enabling it replaces `MODEL_FILE` with the newly
+saved custom model for that notebook session. The combined notebook defaults
+to `RETRAIN=False` and also loads the bundled model.
 
 ## Quick start: independent terminal tasks
 
@@ -191,18 +197,41 @@ saved plot. The default whole-batch time limit is unlimited.
 ### Train classifiers
 
 ```bat
-python "EmbryoAnalyser\workflow.py" train --input "dataset\raw_dataset\gap43-mCherry\train" --model both --output "outputs\training"
+python "EmbryoAnalyser\workflow.py" train --input "dataset\raw_dataset\gap43-mCherry" --model both --output "outputs\training"
 ```
 
 Use `--model rf` or `--model svm` to train only one classifier. Training inputs
 must include both control and mutant embryos. The default training directory is
-`dataset/raw_dataset/gap43-mCherry/train`; its test directory is not included.
+`dataset/raw_dataset/gap43-mCherry`, including both historical `train` and `test`
+subdirectories (14 embryos). Custom training saves a separate model under the
+chosen output directory. It does not replace the bundled default model.
 
 ### Classify measurement CSVs
 
 ```bat
-python "EmbryoAnalyser\workflow.py" classify --input "dataset\raw_dataset\E-CadGFP" --model-file "outputs\training\models.joblib" --output "outputs\classification"
+python "EmbryoAnalyser\workflow.py" classify --input "dataset\raw_dataset\E-CadGFP" --output "outputs\classification"
 ```
+
+Omitting `--model-file` loads `EmbryoAnalyser/models/gap43_default.joblib`, which
+contains RF, SVM, and preprocessing state fitted on all 14 gap43-mCherry embryos
+(8 controls and 6 mutants). It is included in Git and works without access to
+the training dataset or a training step. Supply
+`--model-file "outputs\training\models.joblib"` to use a custom saved model;
+an invalid explicit path causes an error rather than silently choosing another
+model. The bundled model records its training sources, hashes, and package
+versions. Use the pinned analysis dependencies in `requirements.lock.txt` when
+loading it; scikit-learn model files require compatible package versions.
+
+All 14 gap43 embryos, including the historical `test` folder, are in the final
+default model's training set. Predictions on those same embryos are training
+predictions, not independent test results; `also_in_training` identifies these
+inputs in classification reports. Separate leave-one-embryo-out validation uses
+14 folds: train on 13 embryos and predict the remaining one. Each fold refits
+correlation-based feature removal, bin edges, the SVM scaler, importance-based
+feature selection, and both classifiers using only its 13 training embryos.
+Accuracy, macro F1, and confusion matrices are calculated from the 14 held-out
+predictions. This validation was run in memory; its results and fold models were
+not saved. The shipped default model is the final fit on all 14 embryos.
 
 One CSV is one embryo; rows are individual cells. Training CSVs require ImageJ
 columns `Area`, `Perim.`, `Major`, `Minor`, `Angle`, `Circ.`, `Feret`,
@@ -245,6 +274,7 @@ columns, and the fitted SVM scaler. Prediction reuses these values.
 ```text
 EmbryoAnalyser/        Workflow modules, two user notebooks, dependencies
   macros/             Active Fiji neighbour-counting macro
+  models/             Bundled RF/SVM model trained on all 14 gap43 embryos
 fiji-agent/           Local PyImageJ bridge, Java support, optional MCP utilities
 tests/                Workflow regression and integration tests
   fixtures/           Original preprocessing cells used only as a regression oracle
@@ -280,8 +310,8 @@ the local Cellpose runtime are skipped if that runtime is unavailable.
 
 The original classification parameters are preserved: `AR > 1.5`, correlation
 threshold `0.75`, 16 bins, and at least 5% feature importance for reduced models.
-The workflow does not claim a new cross-validation accuracy estimate or improved
-biological classification performance. See [WORKFLOW.md](EmbryoAnalyser/WORKFLOW.md)
+Leave-one-embryo-out validation on gap43 does not establish performance on a
+different strain or imaging protocol. See [WORKFLOW.md](EmbryoAnalyser/WORKFLOW.md)
 for implementation provenance and troubleshooting.
 
 ## Contributing and GitHub use

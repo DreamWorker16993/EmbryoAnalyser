@@ -18,6 +18,9 @@ from EmbryoAnalyser.workflow_io import (
 )
 
 
+DEFAULT_MODEL_FILE = Path(__file__).resolve().parent / "models" / "gap43_default.joblib"
+
+
 def _versions() -> dict:
     return {name: version(name) for name in
             ("numpy", "pandas", "scikit-learn", "matplotlib", "seaborn", "joblib")}
@@ -60,7 +63,7 @@ def train_workflow(inputs=None, output_dir=None, model="both") -> dict:
     """Train RF, SVM, or both, then export their complete reusable state."""
     from EmbryoAnalyser.classifiers import train_models, save_bundle
 
-    inputs = inputs or PROJECT_ROOT / "dataset/raw_dataset/gap43-mCherry/train"
+    inputs = inputs or PROJECT_ROOT / "dataset/raw_dataset/gap43-mCherry"
     paths = expand_inputs(inputs)
     # Validate destinations before fitting so a rejected output cannot leave a
     # partially saved model or overwrite one of the supplied measurements.
@@ -94,12 +97,13 @@ def train_workflow(inputs=None, output_dir=None, model="both") -> dict:
             "profiles_csv": profiles_csv, "report_path": report_path, "report": report}
 
 
-def classify_workflow(inputs, model_file, output_dir=None) -> dict:
+def classify_workflow(inputs, model_file=None, output_dir=None) -> dict:
     """Classify one embryo per CSV and compute metrics only for known labels."""
     from EmbryoAnalyser.classifiers import load_bundle, predict_files
     from EmbryoAnalyser.preprocessing import transform_files
     from sklearn.metrics import accuracy_score, f1_score
 
+    model_file = Path(model_file) if model_file is not None else DEFAULT_MODEL_FILE
     paths = expand_inputs(inputs)
     output = ensure_output_directory(output_dir or DEFAULT_OUTPUT_ROOT / "classification")
     _protect_inputs(output, ("predictions.csv", "profiles.csv", "classification_report.json"),
@@ -125,7 +129,12 @@ def classify_workflow(inputs, model_file, output_dir=None) -> dict:
     training_sources = set()
     if bundle.training_profiles is not None and hasattr(bundle, "training_info"):
         if bundle.training_info is not None:
-            training_sources = set(bundle.training_info["source_csv"])
+            # The shipped model stores repository-relative provenance so it
+            # remains portable while still identifying reused training inputs.
+            training_sources = {
+                str((PROJECT_ROOT / source).resolve())
+                for source in bundle.training_info["source_csv"]
+            }
     report = {
         "model_file": str(Path(model_file).resolve()), "models": list(bundle.models),
         "predictions": len(predictions), "labeled_count": int(known.sum()),
@@ -186,12 +195,13 @@ def build_parser() -> argparse.ArgumentParser:
     segment.add_argument("--timeout", type=float, default=None, help="Optional whole-batch seconds")
     train = commands.add_parser("train", help="Train and save RF/SVM from labeled measurement CSVs")
     train.add_argument("--input", nargs="+", default=None,
-                       help="CSV files or directories; default: gap43-mCherry/train")
+                       help="CSV files or directories; default: all gap43-mCherry embryos")
     train.add_argument("--output", default=None)
     train.add_argument("--model", choices=("rf", "svm", "both"), default="both")
     classify = commands.add_parser("classify", help="Predict a single or batch of measurement CSVs")
     classify.add_argument("--input", nargs="+", required=True)
-    classify.add_argument("--model-file", required=True)
+    classify.add_argument("--model-file", default=None,
+                          help="Saved model; default: bundled RF/SVM trained on all 14 gap43 embryos")
     classify.add_argument("--output", default=None)
     neighbours = commands.add_parser("neighbours", help="Run Fiji on TIFF + ROI copies and plot distributions")
     neighbours.add_argument("--input", nargs="+", required=True)

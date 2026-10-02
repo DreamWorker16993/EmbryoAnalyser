@@ -34,6 +34,11 @@ morphology measurement CSVs used by the classifiers.
   workflow. `RUN_CLASSIFICATION` and `RUN_FIJI` select the two branches;
   `RETRAIN=False` reuses `MODEL_FILE`. Results default to `outputs/notebook/`.
 
+Both notebooks default to `models/gap43_default.joblib`, fitted on all 14 gap43
+embryos (historical train and test folders). Classification requires no training
+step. A selected training task updates `MODEL_FILE` to the custom output model.
+The CLI uses the same bundled model when `--model-file` is omitted.
+
 Select the `Python (EmbryoAnalyser)` kernel backed by
 `EmbryoAnalyser/.venv/Scripts/python.exe`. Launch notebooks from the repository
 root or `EmbryoAnalyser/`. Input lists accept individual paths or recursive
@@ -138,9 +143,14 @@ in `tests/fixtures/legacy_preprocessing.json`, with source commit and checksum.
 
 Training and prediction are separate. Feature selection, bins, and the SVM
 scaler are fitted only on the specified training CSVs. The original notebook's
-globally fitted preprocessing and early scaling are not used to claim a new
-Leave-One-Out validation score. Evaluate cross-strain performance through the
-saved prediction reports rather than assuming accuracy has improved.
+globally fitted preprocessing and early scaling are not used for validation.
+Leave-one-embryo-out validation instead refits all preprocessing, scaling,
+importance selection, and classifiers on 13 embryos in each of 14 folds, then
+predicts the remaining embryo. Validation results are reported in the
+conversation without saving fold models or result files. The bundled default
+model is a separate final fit on all 14 embryos; predictions on those inputs
+are identified as training overlap. Cross-strain performance requires separate
+evaluation.
 
 ## Input errors and data protection
 

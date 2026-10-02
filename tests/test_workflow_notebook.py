@@ -89,7 +89,6 @@ class WorkflowNotebookTests(unittest.TestCase):
                     if "RUN_FIJI = True" in source:
                         output = Path(temporary)
                         namespace.update(OUTPUT=output,
-                                         MODEL_FILE=output / "training/models.joblib",
                                          RUN_FIJI=False, display=captured.append)
             predictions = namespace["classified"]["predictions"]
             self.assertEqual(len(predictions), 10)
@@ -97,6 +96,9 @@ class WorkflowNotebookTests(unittest.TestCase):
             self.assertIn("svm_prediction", predictions)
             report = json.loads((Path(temporary) / "classification/classification_report.json").read_text("utf-8"))
             self.assertEqual(report["predictions"], 10)
+            from EmbryoAnalyser.workflow import DEFAULT_MODEL_FILE
+            self.assertEqual(report["model_file"], str(DEFAULT_MODEL_FILE))
+            self.assertFalse((Path(temporary) / "training").exists())
             samples = namespace["plotted"]["samples"]
             self.assertEqual(len(samples), 1)
             self.assertEqual(samples[0]["n_cells"], 114)
