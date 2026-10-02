@@ -65,9 +65,28 @@ class DocumentationTests(unittest.TestCase):
         self.assertFalse((ROOT / "EmbryoAnalyser/2026_summer_project_report.pdf").exists())
         self.assertFalse((ROOT / "EmbryoAnalyser/final_presentation.pptx").exists())
         self.assertFalse((ROOT / "fiji-agent/README.zh-CN.md").exists())
-        for path in ("EmbryoAnalyser/helpers.py", "EmbryoAnalyser/neighbour_counting_connect_centroid.ijm",
+        for path in ("EmbryoAnalyser/macros/neighbour_counting_connect_centroid.ijm",
                      "fiji-agent/java-support/fijiagent/MemoryPreferencesFactory.java"):
             self.assertTrue((ROOT / path).is_file())
+
+    def test_unused_sources_are_removed_and_active_interfaces_remain(self):
+        obsolete = (
+            "EmbryoAnalyser/mask_to_dm.ipynb", "EmbryoAnalyser/final_analyser.ipynb",
+            "EmbryoAnalyser/n_neighbour_distribution.ipynb", "EmbryoAnalyser/helpers.py",
+            "EmbryoAnalyser/make_mask.ijm", "EmbryoAnalyser/terminal_commands.txt",
+            "fiji-agent/debug_java.py", "fiji-agent/test_bridge.py",
+        )
+        for path in obsolete:
+            with self.subTest(path=path):
+                self.assertFalse((ROOT / path).exists())
+        self.assertEqual(
+            {path.name for path in (ROOT / "EmbryoAnalyser").glob("*.ipynb")},
+            {"run_workflow.ipynb", "staged_workflow.ipynb"},
+        )
+        self.assertEqual(
+            [path.name for path in (ROOT / "EmbryoAnalyser/macros").glob("*.ijm")],
+            ["neighbour_counting_connect_centroid.ijm"],
+        )
 
 
 if __name__ == "__main__":

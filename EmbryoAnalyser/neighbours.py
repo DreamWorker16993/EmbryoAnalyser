@@ -2,7 +2,8 @@
 
 The counting algorithm remains in neighbour_counting_connect_centroid.ijm.
 Only its interactive input-directory prompt is replaced in each working copy.
-The histogram follows n_neighbour_distribution.ipynb, cells 0--3.
+The histogram follows the historical n_neighbour_distribution.ipynb, cells 0--3,
+archived in Git commit 63909ae.
 """
 from __future__ import annotations
 
@@ -30,7 +31,7 @@ except ImportError:
 
 HERE = Path(__file__).resolve().parent
 PROJECT = HERE.parent
-MACRO = HERE / "neighbour_counting_connect_centroid.ijm"
+MACRO = HERE / "macros" / "neighbour_counting_connect_centroid.ijm"
 DEFAULT_FIJI = Path(r"C:\Users\ethan\Desktop\Fiji")
 DEFAULT_PYTHON = PROJECT / "fiji-agent" / ".venv" / "Scripts" / "python.exe"
 _PROMPT = 'getDirectory("Choose the Master Directory containing subfolders:")'

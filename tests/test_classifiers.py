@@ -42,7 +42,7 @@ class ClassifierWorkflowTests(unittest.TestCase):
 
     def test_notebook_preprocessing_regression(self):
         # Execute original transformation cells, independently of new helpers.
-        notebook = json.loads((ROOT / "EmbryoAnalyser" / "final_analyser.ipynb").read_text(encoding="utf-8"))
+        reference = json.loads((ROOT / "tests/fixtures/legacy_preprocessing.json").read_text(encoding="utf-8"))
         class FixedInputDirectory:
             def rglob(directory, pattern):
                 return iter(self.train_paths)
@@ -50,10 +50,10 @@ class ClassifierWorkflowTests(unittest.TestCase):
         namespace = {"pd": pd, "np": np, "Path": Path,
                      "reference_directory": FixedInputDirectory(),
                      "gap43": "gap43-mCherry", "ecad": "E-CadGFP"}
-        read_source = "".join(notebook["cells"][2]["source"])
+        read_source = reference["cells"]["2"]
         read_source = read_source.replace('Path("./raw_dataset")', "reference_directory")
         exec(read_source, namespace)
-        exec("".join(notebook["cells"][3]["source"]), namespace)
+        exec(reference["cells"]["3"], namespace)
         frame = namespace["df"]
         actual_frame, _ = read_measurements(self.train_paths, require_labels=True)
         pd.testing.assert_frame_equal(actual_frame, frame.reset_index(drop=True))
@@ -61,7 +61,7 @@ class ClassifierWorkflowTests(unittest.TestCase):
         for cell in (10, 13, 14, 23, 24):
             if cell == 13:
                 namespace["corr_matrix"] = namespace["df_copy"][namespace["cols"]].corr(method="pearson")
-            exec("".join(notebook["cells"][cell]["source"]), namespace)
+            exec(reference["cells"][str(cell)], namespace)
         expected = namespace["make_bins"](namespace["reduced_df"])
         state, actual, _ = fit_preprocessing(self.train_paths)
         self.assertEqual(state.feature_columns, tuple(namespace["reduced_cols"]))

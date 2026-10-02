@@ -169,6 +169,19 @@ class NeighbourTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "dataset"):
             fiji_worker.validate_manifest(manifest)
 
+    def test_relocated_macro_is_accepted_by_worker_without_algorithm_changes(self):
+        image, roi = self.image()
+        workspace = self.root / "valid_workspace"
+        workspace.mkdir()
+        shutil.copy2(image, workspace / "image.tif")
+        shutil.copy2(roi, workspace / "image_rois.zip")
+        macro = workspace / "run_neighbour_counting.ijm"
+        macro.write_text(neighbours.prepare_macro(workspace), encoding="utf-8")
+        manifest = {"samples": [{"workspace": str(workspace),
+                                  "counts_csv": str(workspace / "slow_neighbour_counting.csv"),
+                                  "macro": str(macro)}]}
+        fiji_worker.validate_manifest(manifest)
+
     def test_direct_worker_rejects_modified_algorithm_before_starting_java(self):
         workspace = self.root / "copied_inputs"
         workspace.mkdir()

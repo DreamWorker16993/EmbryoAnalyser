@@ -243,18 +243,23 @@ columns, and the fitted SVM scaler. Prediction reuses these values.
 ## Repository layout
 
 ```text
-EmbryoAnalyser/        Workflow modules, notebooks, original IJM macros, dependencies
+EmbryoAnalyser/        Workflow modules, two user notebooks, dependencies
+  macros/             Active Fiji neighbour-counting macro
 fiji-agent/           Local PyImageJ bridge, Java support, optional MCP utilities
 tests/                Workflow regression and integration tests
+  fixtures/           Original preprocessing cells used only as a regression oracle
 dataset/              Local input data; never modified and excluded from Git
 outputs/              Local results; excluded from Git
 AGENTS.md             Contribution and dataset-protection rules
 ```
 
-Historical reports and presentation slides are not runtime dependencies and have
-been removed. Original exploratory notebooks, macros, and helpers are retained
-as reference. Use the protected workflow entry points for normal analysis;
-legacy standalone code should be run on input copies when it writes files.
+Historical reports, slides, exploratory notebooks, unused mask helpers/macros,
+command notes, and duplicate debug launchers have been removed. Their originals
+remain available in Git commit `63909ae`. The active neighbour-counting IJM is
+retained under `EmbryoAnalyser/macros/`; Python invokes it and plots its output.
+`tests/fixtures/legacy_preprocessing.json` retains only the original processing
+cells needed for independent algorithm regression. Workflow modules stay at
+their existing import paths so saved model bundles remain compatible.
 
 ## Validation
 

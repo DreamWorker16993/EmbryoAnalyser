@@ -123,7 +123,7 @@ def main(manifest_path) -> int:
         validate_manifest(specification)
         result["samples"] = prepare_images(specification)
         # Invoke the original CLI algorithm once for the whole staged directory.
-        # --save_rois is the documented spelling of terminal_commands.txt's --save_roi.
+        # Export ImageJ ROI archives for the independent neighbour-counting stage.
         from cellpose import __main__ as cli, io, models
         # A caller's cache override must not let Cellpose create/download files
         # under dataset, even though the image outputs are already protected.

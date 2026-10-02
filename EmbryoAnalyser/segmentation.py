@@ -118,6 +118,6 @@ def segmentation_workflow(inputs, output_dir=None, *, python_executable=None,
         actual["n_rois"] = validate_roi_archive(safe_destination(expected["roi_file"]))
     report = {**result, "run_dir": str(run_dir), "image_dir": str(image_dir),
               "manifest": str(manifest), "log": str(log), "result_path": str(result_file),
-              "python_executable": str(executable), "source_command_file": "EmbryoAnalyser/terminal_commands.txt"}
+              "python_executable": str(executable), "command_documentation": "README.md#segment-images"}
     report["report_json"] = str(write_json(run_dir / "segmentation_report.json", report))
     return report

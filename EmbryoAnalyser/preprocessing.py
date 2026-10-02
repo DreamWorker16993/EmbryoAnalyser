@@ -1,6 +1,7 @@
 """Reusable copies of the measurement processing in final_analyser.ipynb.
 
-The source notebook is preserved. Cell numbers below use zero-based indexing.
+The source notebook is archived in Git commit 63909ae. Cell numbers below use
+zero-based indexing; its reference transformations are retained in test fixtures.
 Each CSV describes one embryo, and each CSV row describes one cell.
 """
 

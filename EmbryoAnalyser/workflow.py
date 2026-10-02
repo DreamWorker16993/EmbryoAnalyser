@@ -86,7 +86,8 @@ def train_workflow(inputs=None, output_dir=None, model="both") -> dict:
         "bin_edges": {name: edges.tolist() for name, edges in state.bin_edges.items()},
         "class_mapping": {"0": "control", "1": "mutant"},
         "package_versions": _versions(),
-        "source_notebook": "EmbryoAnalyser/final_analyser.ipynb",
+        "source_modules": ["EmbryoAnalyser/preprocessing.py", "EmbryoAnalyser/classifiers.py"],
+        "algorithm_origin": {"git_commit": "63909ae", "path": "EmbryoAnalyser/final_analyser.ipynb"},
     }
     report_path = write_json(output / "training_report.json", report)
     return {"bundle": bundle, "model_file": model_file,

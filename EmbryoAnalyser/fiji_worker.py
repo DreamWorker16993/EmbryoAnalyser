@@ -15,7 +15,7 @@ except ImportError:
 
 def validate_manifest(specification: dict) -> None:
     """Validate all output paths and exact macro copies before starting Java."""
-    original = (Path(__file__).parent / "neighbour_counting_connect_centroid.ijm").read_text(encoding="utf-8")
+    original = (Path(__file__).parent / "macros" / "neighbour_counting_connect_centroid.ijm").read_text(encoding="utf-8")
     prompt = 'getDirectory("Choose the Master Directory containing subfolders:")'
     if original.count(prompt) != 1:
         raise ValueError("The original macro directory prompt needs review.")

@@ -50,10 +50,11 @@ Other stages remain disabled until selected.
 
 `segment` copies `.tif`/`.tiff` inputs before inference and calls the original
 Cellpose command-line algorithm once over the prepared directory. The model
-remains `cpsam_v2`, following `terminal_commands.txt`. The full ROI flag is
+remains `cpsam_v2`, following the historical batch command. Current commands are
+in the [main README](../README.md#segment-images). The full ROI flag is
 `--save_rois`, as documented in the official
 [Cellpose output reference](https://cellpose.readthedocs.io/en/latest/outputs.html).
-The original command file is preserved.
+The original command file is archived in Git commit `63909ae`.
 
 Each run creates a unique folder containing `input_copies/`, prepared `images/`,
 matching `*_rois.zip`, `*_seg.npy`, worker metadata, reports, and logs. The
@@ -117,8 +118,12 @@ zero.
 
 ## Algorithm provenance
 
-Original exploratory notebooks and IJM macros are retained. Code-cell numbers
-below are zero-based.
+Exploratory notebooks are archived in Git commit `63909ae`. Code-cell numbers
+below refer to those historical notebooks and are zero-based. Only the active
+`macros/neighbour_counting_connect_centroid.ijm` remains in the working tree;
+Python wraps its execution rather than replacing its counting algorithm.
+The original preprocessing cells used by regression tests are stored separately
+in `tests/fixtures/legacy_preprocessing.json`, with source commit and checksum.
 
 - `preprocessing.py` copies and packages `final_analyser.ipynb` cells 2-3, 10,
   13-14, and 23-24. Angle correction is used for correlation only; binning uses

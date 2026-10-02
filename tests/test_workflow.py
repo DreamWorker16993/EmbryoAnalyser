@@ -191,8 +191,7 @@ class WorkflowClassificationIntegrationTests(unittest.TestCase):
         cls.original_hashes = {
             path: hashlib.sha256(path.read_bytes()).hexdigest()
             for path in cls.training_csvs + cls.testing_csvs + [
-                ANALYSER / "final_analyser.ipynb",
-                ANALYSER / "neighbour_counting_connect_centroid.ijm",
+                ANALYSER / "macros/neighbour_counting_connect_centroid.ijm",
             ]
         }
         cls.addClassCleanup(cls.assert_original_inputs_unchanged)

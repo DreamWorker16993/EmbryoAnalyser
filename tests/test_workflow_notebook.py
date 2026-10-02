@@ -16,6 +16,18 @@ NOTEBOOK = ROOT / "EmbryoAnalyser/run_workflow.ipynb"
 
 
 class WorkflowNotebookTests(unittest.TestCase):
+    def test_setup_finds_project_from_nested_directory_without_legacy_notebook(self):
+        for name in ("run_workflow.ipynb", "staged_workflow.ipynb"):
+            path = ROOT / "EmbryoAnalyser" / name
+            notebook = nbformat.read(path, as_version=4)
+            setup = next(cell for cell in notebook.cells
+                         if cell.cell_type == "code" and "ROOT = next(" in cell.source)
+            namespace = {"__name__": "__main__"}
+            with self.subTest(notebook=name), patch.object(Path, "cwd", return_value=ROOT / "tests/fixtures"):
+                with redirect_stdout(io.StringIO()):
+                    exec(compile(setup.source, str(path), "exec"), namespace)
+                self.assertEqual(namespace["ROOT"], ROOT)
+
     def test_staged_notebook_is_clean_and_tasks_start_only_when_selected(self):
         staged = ROOT / "EmbryoAnalyser/staged_workflow.ipynb"
         notebook = nbformat.read(staged, as_version=4)
